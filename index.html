@@ -1,0 +1,2443 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#1e6b7c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Assistant Libramont-Chevigny">
+<link rel="manifest" href="/LibramontBot/manifest.json">
+<link rel="apple-touch-icon" href="/LibramontBot/icon-192.png">
+<title>Assistant Libramont-Chevigny</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --blue:#007884;--blue-dark:#04363D;--blue-mid:#10838F;
+  --blue-light:#e6f3f2;--blue-pale:#eef8f7;
+  --red:#00606C;--red-dark:#04363D;--red-mid:#0f7480;
+  --gold:#7CB342;--gold-light:#9CCC65;
+  --white:#fff;--ink:#1a1a2e;--gray:#eef2f8;
+  --gray-mid:#3f6e72;--gray-bd:#b7d9d7;--green:#7ec140;
+  --r:16px;
+  --sh-sm:0 2px 12px rgba(4,54,61,.12);
+  --sh-lg:0 14px 60px rgba(4,54,61,.25);
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--blue-dark);display:flex;flex-direction:column;
+  background-image:radial-gradient(ellipse 80% 60% at 15% 80%,rgba(0,120,132,.2) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 50% at 85% 10%,rgba(124,179,66,.12) 0%,transparent 55%);}
+
+/* HEADER */
+.page-header{display:flex;align-items:center;gap:12px;padding:12px 16px 0;flex-shrink:0}
+.commune-logo{width:58px;height:58px;border-radius:12px;background:var(--white);padding:3px;box-shadow:0 2px 8px rgba(0,0,0,.15);overflow:hidden;flex-shrink:0}
+.commune-logo img{width:100%;height:100%;object-fit:contain}
+.commune-info h1{font-family:'Sora',sans-serif;font-size:17px;font-weight:600;color:var(--white);line-height:1.2}
+.commune-info p{font-size:11px;color:rgba(255,255,255,.45);margin-top:2px}
+.status-badge{margin-left:auto;display:flex;align-items:center;gap:5px;font-size:11px;color:#6fcf97;background:rgba(111,207,151,.12);padding:4px 10px;border-radius:20px;border:1px solid rgba(111,207,151,.25);white-space:nowrap;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.status-dot{width:6px;height:6px;border-radius:50%;background:#6fcf97;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* LANG */
+.lang-row{display:flex;gap:6px;padding:7px 16px 0;flex-shrink:0;flex-wrap:wrap}
+.lang-btn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.65);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:5px 10px;border-radius:14px;cursor:pointer;transition:all .15s;min-height:30px}
+.lang-btn.active,.lang-btn:hover{background:rgba(255,255,255,.25);color:#fff;border-color:rgba(255,255,255,.5)}
+
+/* CHAT SHELL */
+main{flex:1;min-height:0;display:flex;flex-direction:column}
+.chat-wrap{flex:1;display:flex;flex-direction:column;margin:8px 12px 10px;border-radius:var(--r);overflow:hidden;box-shadow:var(--sh-lg);min-height:0}
+
+/* TOP BAR */
+.chat-topbar{background:var(--red);padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0;overflow-x:auto;scrollbar-width:none}
+.chat-topbar::-webkit-scrollbar{display:none}
+.bot-avatar{width:34px;height:34px;border-radius:8px;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.bot-avatar img{width:24px;height:24px;object-fit:contain}
+.bot-name{font-family:'Sora',sans-serif;font-size:13px;font-weight:500;color:#fff;line-height:1.2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.bot-name-wrap{flex:1;min-width:0;overflow:hidden}
+.bot-sub{font-size:10px;color:rgba(255,255,255,.5);margin-top:1px}
+.svc-pill{margin-left:auto;font-size:10px;font-weight:500;padding:3px 8px;border-radius:10px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.25);display:none;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.svc-pill.on{display:block}
+.reset-btn{background:none;border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;font-size:11px;padding:4px 9px;border-radius:20px;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap}
+.reset-btn:hover{color:#fff;border-color:rgba(255,255,255,.6)}
+
+/* MESSAGES */
+.msgs{flex:1;min-height:0;overflow-y:auto;overflow-x:hidden;padding:12px;display:flex;flex-direction:column;gap:11px;background:var(--blue-pale);-webkit-overflow-scrolling:touch;scroll-behavior:smooth}
+.msgs::-webkit-scrollbar{width:3px}
+.msgs::-webkit-scrollbar-thumb{background:var(--gray-bd);border-radius:2px}
+.msg-row{display:flex;gap:7px;align-items:flex-start;opacity:0;transform:translateY(6px);animation:fadeUp .25s ease forwards;min-width:0;max-width:100%}
+.msg-row.user{flex-direction:row-reverse}
+@keyframes fadeUp{to{opacity:1;transform:translateY(0)}}
+.av{width:26px;height:26px;border-radius:7px;background:var(--blue);display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden}
+.av img{width:18px;height:18px;object-fit:contain}
+.av svg{width:13px;height:13px;fill:#fff}
+.av.u{background:var(--gray)}
+.av.u svg{fill:var(--blue)}
+.bbl{max-width:min(82%,calc(100vw - 76px));padding:9px 13px;border-radius:13px;font-size:14px;line-height:1.65;color:var(--ink);word-break:break-word;overflow-wrap:anywhere}
+.bbl.bot{background:var(--white);border:1px solid var(--gray-bd);border-bottom-left-radius:3px;box-shadow:var(--sh-sm)}
+.bbl.user{background:var(--blue);color:#fff;border-bottom-right-radius:3px}
+.bbl strong{font-weight:500;color:var(--blue)}
+.bbl.user strong{color:var(--gold-light)}
+.bbl a{color:var(--blue);text-decoration:underline;word-break:break-all}
+.bbl.user a{color:var(--gold-light)}
+.bbl ul{padding-left:15px;margin-top:5px}
+.bbl li{margin-bottom:3px}
+.bbl.rtl{direction:rtl;text-align:right;font-family:sans-serif}
+.msg-row>div{display:flex;flex-direction:column;align-items:flex-start}
+.msg-row.user>div{align-items:flex-end}
+
+/* SERVICE SELECTOR */
+.svc-selector{background:var(--white);border:1px solid var(--gray-bd);border-radius:13px;padding:12px;box-shadow:var(--sh-sm);opacity:0;animation:fadeUp .3s ease forwards;max-height:45vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.svc-selector-title{font-size:11px;color:var(--gray-mid);margin-bottom:9px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.svc-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+@media(min-width:520px){.svc-grid{grid-template-columns:repeat(3,1fr)}}
+.svc-btn{display:flex;align-items:center;gap:7px;padding:9px 10px;background:var(--blue-pale);border:1.5px solid transparent;border-radius:9px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink);text-align:left;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.svc-btn:active,.svc-btn:hover{border-color:var(--blue);background:var(--blue-light);color:var(--blue-dark)}
+.svc-icon{font-size:16px;flex-shrink:0;line-height:1}
+
+/* QUICK REPLIES */
+.qr-wrap{display:flex;flex-wrap:nowrap;gap:6px;margin-top:7px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch}
+.qr-wrap::-webkit-scrollbar{display:none}
+.qr-btn{background:var(--white);border:1.5px solid var(--blue);color:var(--blue);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:500;padding:6px 12px;border-radius:20px;cursor:pointer;transition:all .15s;white-space:nowrap;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.qr-btn:active,.qr-btn:hover{background:var(--blue);color:#fff}
+
+/* TYPING */
+.typing-row{display:flex;gap:7px;align-items:flex-end;opacity:0;animation:fadeUp .25s ease forwards}
+.typing-bbl{background:var(--white);border:1px solid var(--gray-bd);border-radius:13px;border-bottom-left-radius:3px;padding:11px 14px;display:flex;gap:4px;align-items:center;box-shadow:var(--sh-sm)}
+.t-dot{width:6px;height:6px;border-radius:50%;background:var(--blue-mid);animation:bounce 1.2s infinite}
+.t-dot:nth-child(2){animation-delay:.2s}
+.t-dot:nth-child(3){animation-delay:.4s}
+@keyframes bounce{0%,80%,100%{transform:translateY(0)}40%{transform:translateY(-4px)}}
+
+/* INPUT */
+.input-bar{padding:10px 12px;background:var(--white);border-top:1px solid var(--gray-bd);display:flex;gap:8px;align-items:flex-end;flex-shrink:0;padding-bottom:max(10px,env(safe-area-inset-bottom));position:relative}
+#chat-input{flex:1;border:1.5px solid var(--gray-bd);border-radius:22px;padding:9px 14px;font-family:'DM Sans',sans-serif;font-size:15px;color:var(--ink);outline:none;transition:border-color .2s;background:var(--blue-pale);resize:none;max-height:80px;overflow-y:auto;line-height:1.4}
+#chat-input:focus{border-color:var(--blue);background:#fff}
+#chat-input::placeholder{color:var(--gray-mid)}
+.send-btn{width:42px;height:42px;border-radius:12px;background:var(--blue);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.send-btn:hover{background:var(--blue-mid)}
+.send-btn:active{transform:scale(.95)}
+.send-btn:disabled{background:var(--gray);cursor:not-allowed;transform:none}
+.send-btn svg{width:16px;height:16px;fill:#fff}
+
+/* FOOTER */
+.page-footer{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;padding:7px 16px 10px;flex-shrink:0}
+.foot-chip{display:flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,.3)}
+.foot-chip svg{width:11px;height:11px;fill:currentColor;flex-shrink:0}
+.foot-chip a{color:rgba(255,255,255,.45);text-decoration:underline}
+.ts{font-size:11px;color:var(--gray-mid);text-align:center;padding:2px 0}
+
+/* PHONE BUTTON */
+.phone-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(26,171,114,.2);border:1.5px solid rgba(26,171,114,.4);color:#6fcf97;cursor:pointer;transition:all .15s;flex-shrink:0;text-decoration:none;-webkit-tap-highlight-color:transparent}
+.phone-btn:hover{background:rgba(26,171,114,.35);border-color:#6fcf97}
+.phone-btn svg{width:16px;height:16px;fill:currentColor}
+
+/* Welcome message compact */
+.bbl.welcome{font-size:13px;padding:8px 12px;background:var(--blue-light);border-color:var(--blue);color:var(--blue-dark)}
+
+/* HORAIRES BANNER */
+.horaires-banner{display:flex;align-items:center;gap:6px;margin-left:auto;font-size:13px;font-weight:600;white-space:nowrap}
+.horaires-banner.ouvert{color:#6fcf97}
+.horaires-banner.ferme{color:#f2994a}
+.horaires-banner.bientot{color:#f2c94c}
+.horaires-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.ouvert .horaires-dot{background:#6fcf97;animation:pulse 2s infinite}
+.ferme .horaires-dot{background:#f2994a}
+.bientot .horaires-dot{background:#f2c94c;animation:pulse 1s infinite}
+
+/* FEEDBACK */
+.feedback-wrap{display:flex;gap:6px;margin-top:6px;align-items:center}
+.fb-btn{background:none;border:1.5px solid var(--gray-bd);border-radius:20px;padding:3px 10px;font-size:12px;cursor:pointer;transition:all .15s;color:var(--gray-mid)}
+.fb-btn:hover{border-color:var(--blue);color:var(--blue)}
+/* Mode vocal actif : ces boutons n'ont pas de sens en vocal (l'IA répond
+   à l'oral, pas via un like/dislike textuel) et l'overlay les couvre déjà
+   visuellement — on les masque malgré tout explicitement par sécurité. */
+body.voice-mode-active .feedback-wrap{display:none!important}
+.fb-btn.liked{background:#e8f5e9;border-color:#1aab72;color:#1aab72}
+.fb-btn.disliked{background:#fdecea;border-color:#e53935;color:#e53935}
+.fb-speak{margin-left:auto;padding:3px 8px}
+.fb-speak.playing{background:var(--blue-light);border-color:var(--blue);color:var(--blue)}
+.fb-done{font-size:11px;color:var(--gray-mid);padding:2px 4px}
+
+/* ALERTE BOUTON */
+.alert-btn{display:flex;align-items:center;gap:6px;background:rgba(235,87,87,.15);border:1.5px solid rgba(235,87,87,.4);color:#eb5757;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:5px 11px;border-radius:20px;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.alert-btn:hover{background:rgba(235,87,87,.25);border-color:#eb5757}
+/* ── Bouton vocal topbar ── */
+.voice-topbar-btn{display:flex;align-items:center;gap:5px;background:rgba(26,143,255,.15);border:1.5px solid rgba(26,143,255,.4);color:#5bc4ff;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:500;padding:5px 11px;border-radius:20px;cursor:pointer;transition:all .15s;flex-shrink:0;white-space:nowrap;-webkit-tap-highlight-color:transparent}
+.voice-topbar-btn:hover{background:rgba(26,143,255,.3);border-color:#5bc4ff}
+.voice-topbar-btn svg{width:14px;height:14px;fill:currentColor}
+/* ── Boutons micro et stop dans input-bar ── */
+.mic-btn{width:42px;height:42px;border-radius:12px;background:var(--blue-pale);border:1.5px solid var(--gray-bd);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.mic-btn:hover,.mic-btn:active{background:rgba(26,143,255,.15);border-color:var(--blue)}
+.mic-btn.listening{background:#fdecea;border-color:#eb5757;animation:pulse-red 1s infinite}
+.mic-btn svg{width:18px;height:18px;fill:var(--blue)}
+.mic-btn.listening svg{fill:#eb5757}
+@keyframes pulse-red{0%,100%{opacity:1}50%{opacity:.5}}
+.stop-btn{width:48px;height:42px;border-radius:12px;background:#eb5757;border:none;cursor:pointer;display:none;align-items:center;justify-content:center;gap:3px;flex-direction:column;transition:all .15s;flex-shrink:0;-webkit-tap-highlight-color:transparent;box-shadow:0 2px 8px rgba(235,87,87,.4)}
+.stop-btn.visible{display:flex}
+.stop-btn:active{transform:scale(.93)}
+.stop-btn-icon{width:12px;height:12px;background:#fff;border-radius:2px;flex-shrink:0}
+.stop-btn-label{font-size:8px;font-weight:700;color:#fff;letter-spacing:.5px;line-height:1}
+/* ── Voice overlay ── */
+#voice-overlay{display:none;position:fixed;inset:0;z-index:9998;background:linear-gradient(160deg,var(--blue-dark) 0%,#001f40 100%);flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0}
+#voice-overlay.open{display:flex}
+.voice-orb-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;flex-shrink:0;padding:28px 20px 14px}
+.voice-orb{width:100px;height:100px;border-radius:50%;background:radial-gradient(circle at 35% 35%,var(--blue-mid,#2d6e26),var(--blue-dark));display:flex;align-items:center;justify-content:center;position:relative;transition:all .3s;box-shadow:0 0 30px rgba(26,87,20,.3);flex-shrink:0}
+.voice-orb img{width:56px;height:56px;object-fit:contain;border-radius:50%}
+.voice-orb.listening{animation:orb-pulse 1.2s ease-in-out infinite;background:radial-gradient(circle at 35% 35%,#1a8fff,var(--blue))}
+.voice-orb.speaking{animation:orb-speak .7s ease-in-out infinite alternate;background:radial-gradient(circle at 35% 35%,#e8a020,#8a5000)}
+.voice-orb.thinking{animation:orb-think 1.5s linear infinite}
+@keyframes orb-pulse{0%{box-shadow:0 0 0 0 rgba(26,143,255,.7)}70%{box-shadow:0 0 0 36px rgba(26,143,255,0)}100%{box-shadow:0 0 0 0 rgba(26,143,255,0)}}
+@keyframes orb-speak{from{transform:scale(1);box-shadow:0 0 20px rgba(232,160,32,.4)}to{transform:scale(1.06);box-shadow:0 0 40px rgba(232,160,32,.7)}}
+@keyframes orb-think{from{filter:brightness(1)}50%{filter:brightness(1.4)}to{filter:brightness(1)}}
+.voice-status{font-family:'Sora',sans-serif;font-size:16px;font-weight:500;color:rgba(255,255,255,.9);letter-spacing:.3px;min-height:24px;text-align:center}
+.voice-status.listening{color:#5bc4ff}
+.voice-status.speaking{color:#f0c060}
+.voice-status.thinking{color:rgba(255,255,255,.6)}
+.voice-transcript{flex:1 1 0;min-height:0;overflow-y:scroll;display:flex;flex-direction:column;gap:8px;padding:8px 16px;-webkit-overflow-scrolling:touch;border-radius:0;background:rgba(255,255,255,.07);margin:0}
+.voice-transcript::-webkit-scrollbar{width:3px}
+.voice-transcript::-webkit-scrollbar-thumb{background:rgba(255,255,255,.3);border-radius:2px}
+.vt-user{align-self:flex-end;background:var(--blue);color:#fff;padding:8px 14px;border-radius:12px 12px 3px 12px;font-size:14px;line-height:1.5;max-width:85%;word-break:break-word}
+.vt-bot{align-self:flex-start;background:rgba(255,255,255,.12);color:rgba(255,255,255,.9);padding:8px 14px;border-radius:12px 12px 12px 3px;font-size:14px;line-height:1.5;max-width:85%;word-break:break-word;border:1px solid rgba(255,255,255,.15)}
+.voice-controls{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.voice-mic-btn{width:72px;height:72px;border-radius:50%;background:var(--blue);border:3px solid rgba(255,255,255,.3);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;-webkit-tap-highlight-color:transparent;box-shadow:0 4px 20px rgba(26,87,20,.5)}
+.voice-mic-btn:active{transform:scale(.93)}
+.voice-mic-btn.listening{background:#eb5757;border-color:rgba(235,87,87,.5)}
+.voice-mic-btn svg{width:30px;height:30px;fill:#fff}
+.voice-close-btn{width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,.1);border:1.5px solid rgba(255,255,255,.25);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;-webkit-tap-highlight-color:transparent;color:#fff;font-size:20px}
+.voice-close-btn:active{transform:scale(.93)}
+.voice-hint{font-size:11px;color:rgba(255,255,255,.35);text-align:center;margin-top:6px}
+.alert-dot{width:7px;height:7px;border-radius:50%;background:#eb5757;animation:pulse 1s infinite;flex-shrink:0}
+
+/* STATUS badge colors */
+.status-badge.offline{color:#f2994a;background:rgba(242,153,74,.12);border-color:rgba(242,153,74,.25)}
+.status-badge.offline .status-dot{background:#f2994a}
+.status-badge.quota{color:#f2994a;background:rgba(242,153,74,.12);border-color:rgba(242,153,74,.25)}
+.status-badge.quota .status-dot{background:#f2994a;animation:none}
+
+/* MODAL ALERTE */
+#alert-overlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.6);overflow-y:auto;-webkit-overflow-scrolling:touch;padding:20px 16px;align-items:flex-start;justify-content:center}
+#alert-overlay.open{display:flex}
+#alert-dialog{background:#fff;border-radius:16px;padding:20px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);margin:auto;flex-shrink:0}
+.alert-item-btn{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;border:1.5px solid var(--gray-bd);background:var(--blue-pale);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;color:var(--ink);text-align:left;transition:all .15s;width:100%}
+.alert-item-btn:hover,.alert-item-btn:focus{border-color:#eb5757;background:#fdecea}
+.alert-cancel-btn{margin-top:14px;width:100%;padding:10px;border-radius:10px;border:1.5px solid var(--gray-bd);background:none;font-family:'DM Sans',sans-serif;font-size:13px;color:var(--gray-mid);cursor:pointer;transition:border-color .15s}
+.alert-cancel-btn:hover{border-color:var(--gray-mid)}
+
+/* ── Bandeau push in-app ── */
+#push-strip{display:none;margin:6px 12px 0;border-radius:12px;overflow:hidden;flex-shrink:0;animation:fadeUp .3s ease}
+#push-strip.show{display:block}
+.push-strip-head{display:flex;align-items:center;gap:8px;padding:9px 13px;
+  background:linear-gradient(135deg,#c0392b,#7b241c);cursor:pointer;
+  -webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none;
+  animation:pushAlertPulse 1.6s ease-in-out infinite}
+@keyframes pushAlertPulse{
+  0%,100%{background:linear-gradient(135deg,#c0392b,#7b241c);box-shadow:0 0 0 0 rgba(192,57,43,0)}
+  50%{background:linear-gradient(135deg,#e74c3c,#c0392b);box-shadow:0 0 14px 3px rgba(231,76,60,.55)}}
+.push-strip-latest{flex:1;font-size:12px;font-weight:500;color:#fff;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.push-strip-badge{font-size:10px;font-weight:700;background:rgba(255,255,255,.25);
+  color:#fff;padding:2px 8px;border-radius:10px;flex-shrink:0}
+.push-strip-arrow{font-size:10px;color:rgba(255,255,255,.7);flex-shrink:0;
+  transition:transform .2s;display:inline-block}
+.push-strip-arrow.open{transform:rotate(180deg)}
+.push-strip-body{display:none;background:rgba(60,10,10,.96);border-top:1px solid rgba(255,255,255,.08)}
+.push-strip-body.open{display:block}
+.push-strip-item{display:flex;align-items:flex-start;gap:8px;padding:10px 13px;
+  border-bottom:1px solid rgba(255,255,255,.06)}
+.push-item-txt{flex:1;min-width:0}
+.push-item-title{font-size:12px;font-weight:600;color:rgba(255,255,255,.9);margin-bottom:2px}
+.push-item-body{font-size:11px;color:rgba(255,255,255,.6);line-height:1.4}
+.push-item-time{font-size:10px;color:rgba(255,255,255,.3);margin-top:3px}
+.push-item-del{background:none;border:none;color:rgba(255,255,255,.25);font-size:16px;
+  cursor:pointer;padding:0;line-height:1;flex-shrink:0;-webkit-tap-highlight-color:transparent}
+.push-item-del:hover{color:rgba(255,255,255,.6)}
+.push-strip-footer{padding:7px 13px;text-align:right}
+.push-strip-clear{background:none;border:none;font-size:11px;color:rgba(255,255,255,.3);
+  cursor:pointer;text-decoration:underline}
+.push-strip-clear:hover{color:rgba(255,255,255,.6)}
+#push-toast{position:fixed;top:0;left:0;right:0;z-index:9997;
+  background:linear-gradient(135deg,#c0392b,#7b241c);
+  color:#fff;padding:12px 16px;display:flex;align-items:flex-start;gap:10px;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);animation:fadeUp .25s ease;cursor:pointer}
+@media(min-width:860px){#push-strip{max-width:800px;margin-left:auto;margin-right:auto;margin-top:6px}}
+
+/* MOBILE */
+@media(max-width:600px){html,body{height:auto;overflow:auto}body{min-height:100svh}.chat-wrap{flex:none;min-height:0}.msgs{flex:none;height:auto;max-height:55vh}}
+@media(max-width:480px){html,body{height:auto;overflow:auto}body{min-height:100svh}.page-header{padding:9px 12px 0}.commune-info h1{font-size:15px}.commune-logo{width:38px;height:38px}.lang-row{padding:6px 12px 0}.chat-wrap{flex:none;margin:7px 8px 8px;border-radius:14px;min-height:0}.msgs{flex:none;height:auto;min-height:200px;max-height:60vh}.bot-sub{display:none}.bbl{font-size:13px;max-width:calc(100vw - 80px);overflow-wrap:anywhere}.page-footer{padding:5px 12px 8px;gap:10px}.svc-pill,.svc-pill.on{display:none!important}}
+@media(max-height:620px){.page-header{display:none}.lang-row{padding-top:6px}}
+@media(min-width:860px){body{padding:0 20px}.page-header,.lang-row{max-width:800px;margin-left:auto;margin-right:auto;width:100%}.chat-wrap{max-width:800px;margin-left:auto;margin-right:auto}.page-footer{padding-bottom:14px}}
+
+/* ── PWA bannière installation ── */
+#pwa-banner{display:none;position:fixed;bottom:0;left:0;right:0;z-index:9990;background:var(--blue);color:#fff;padding:12px 16px;flex-direction:row;align-items:center;gap:12px;box-shadow:0 -4px 20px rgba(0,0,0,.3)}
+#pwa-banner.show{display:flex}
+#pwa-banner img{width:36px;height:36px;border-radius:8px;flex-shrink:0}
+#pwa-banner-text{flex:1;font-size:13px;line-height:1.4}
+#pwa-banner-text strong{display:block;font-size:14px;margin-bottom:2px}
+.pwa-btn{padding:8px 14px;border-radius:10px;font-size:12px;font-weight:600;cursor:pointer;border:none;flex-shrink:0}
+.pwa-install{background:var(--gold,#e8a020);color:#fff}
+.pwa-dismiss{background:rgba(255,255,255,.15);color:#fff}
+/* ── Panneau admin notifications ── */
+/* ═══ ADMIN PANEL — DARK COMMAND CENTER ═══ */
+#admin-panel{
+  display:none;position:fixed;inset:0;z-index:9995;
+  background:linear-gradient(145deg,#080f1a 0%,#0d1b2e 60%,#0a1520 100%);
+  flex-direction:column;align-items:center;justify-content:center;
+  padding:24px 20px;
+  animation:adminFadeIn .25s ease;
+}
+@keyframes adminFadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+#admin-panel.open{display:flex}
+.admin-inner{
+  width:100%;max-width:420px;
+  background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:20px;padding:28px 24px;
+  box-shadow:0 0 60px rgba(26,87,20,.3),0 0 0 1px rgba(26,87,20,.15);
+  position:relative;
+  overflow-y:auto;
+  max-height:calc(100dvh - 48px);
+}
+.admin-glow{
+  position:absolute;top:-1px;left:20%;right:20%;height:2px;
+  background:linear-gradient(90deg,transparent,#0056a4,#e8a020,#0056a4,transparent);
+  border-radius:2px;
+}
+.admin-badge{
+  display:flex;align-items:center;gap:10px;margin-bottom:20px;
+}
+.admin-badge-icon{
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,#0056a4,#003d7a);
+  border:1px solid rgba(26,87,20,.5);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;flex-shrink:0;
+  box-shadow:0 0 20px rgba(26,87,20,.4);
+}
+.admin-badge-info h4{
+  margin:0;font-family:'Sora',sans-serif;font-size:15px;
+  font-weight:600;color:#fff;letter-spacing:.3px;
+}
+.admin-badge-info p{
+  margin:2px 0 0;font-size:11px;
+  color:rgba(255,255,255,.4);letter-spacing:.5px;text-transform:uppercase;
+}
+#admin-stats{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(26,87,20,.15);border:1px solid rgba(26,87,20,.3);
+  border-radius:10px;padding:8px 12px;margin-bottom:16px;
+  font-size:12px;color:rgba(255,255,255,.7);
+}
+#admin-stats::before{content:'●';color:#6fcf97;font-size:8px;animation:pulse 2s infinite}
+.admin-field-label{
+  font-size:10px;text-transform:uppercase;letter-spacing:.8px;
+  color:rgba(255,255,255,.4);margin-bottom:6px;
+}
+#admin-notif-title{
+  width:100%;box-sizing:border-box;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:10px 14px;
+  font-size:13px;color:#fff;font-family:inherit;
+  margin-bottom:14px;outline:none;
+  transition:border-color .2s;
+}
+#admin-notif-title:focus{border-color:rgba(26,87,20,.7);background:rgba(26,87,20,.1)}
+#admin-notif-title::placeholder{color:rgba(255,255,255,.25)}
+#admin-notif-body{
+  width:100%;box-sizing:border-box;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:10px;padding:10px 14px;
+  font-size:13px;color:#fff;font-family:inherit;
+  resize:vertical;min-height:90px;outline:none;
+  transition:border-color .2s;
+}
+#admin-notif-body:focus{border-color:rgba(26,87,20,.7);background:rgba(26,87,20,.1)}
+#admin-notif-body::placeholder{color:rgba(255,255,255,.25)}
+.admin-row{display:flex;gap:10px;margin-top:16px}
+.admin-send{
+  flex:1;padding:12px;border:none;border-radius:12px;
+  background:linear-gradient(135deg,#0056a4,#003d7a);
+  color:#fff;font-family:'Sora',sans-serif;font-size:13px;font-weight:600;
+  cursor:pointer;letter-spacing:.3px;
+  box-shadow:0 4px 20px rgba(26,87,20,.4);
+  transition:all .2s;
+}
+.admin-send:hover{background:linear-gradient(135deg,#2d6e26,#1a5714);transform:translateY(-1px);box-shadow:0 6px 24px rgba(26,87,20,.5)}
+.admin-send:active{transform:translateY(0)}
+.admin-send:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.admin-close{
+  padding:12px 16px;border-radius:12px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  color:rgba(255,255,255,.6);font-family:inherit;font-size:13px;
+  cursor:pointer;transition:all .15s;
+}
+.admin-close:hover{background:rgba(255,255,255,.12);color:#fff}
+#admin-fab{display:none;position:fixed;bottom:16px;right:16px;z-index:9989;
+  width:52px;height:52px;border-radius:50%;
+  background:linear-gradient(135deg,#0056a4,#003d7a);color:#fff;border:none;
+  font-size:20px;cursor:pointer;
+  box-shadow:0 4px 20px rgba(26,87,20,.5);
+  align-items:center;justify-content:center;transition:all .2s}
+#admin-fab:hover{transform:scale(1.08)}
+#admin-fab.show{display:flex}
+/* ── Onglets admin ── */
+.admin-tabs{display:flex;gap:6px;margin-bottom:18px}
+.admin-tab{flex:1;padding:8px 10px;border-radius:10px;border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);color:rgba(255,255,255,.5);font-family:'DM Sans',sans-serif;
+  font-size:12px;font-weight:500;cursor:pointer;transition:all .2s;text-align:center}
+.admin-tab.active{background:rgba(26,87,20,.35);border-color:rgba(82,144,26,.5);color:#fff}
+.admin-pane{display:none}
+.admin-pane.active{display:block}
+/* ── Grille stats ── */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.stat-card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.stat-card-icon{font-size:20px;line-height:1}
+.stat-card-value{font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:#fff;line-height:1}
+.stat-card-label{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;letter-spacing:.6px}
+.stat-topics{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:12px 14px;margin-bottom:10px}
+.stat-topics-title{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;
+  letter-spacing:.6px;margin-bottom:10px}
+.stat-topic-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.stat-topic-label{font-size:12px;color:rgba(255,255,255,.75);flex:1;min-width:0;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stat-topic-bar-wrap{width:80px;height:5px;background:rgba(255,255,255,.1);border-radius:3px;flex-shrink:0}
+.stat-topic-bar{height:5px;border-radius:3px;background:linear-gradient(90deg,#0056a4,#5bc4ff);transition:width .4s}
+.stat-topic-count{font-size:11px;color:rgba(255,255,255,.4);width:24px;text-align:right;flex-shrink:0}
+.stats-refresh{background:none;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);
+  font-size:11px;padding:5px 12px;border-radius:8px;cursor:pointer;width:100%;margin-top:4px;
+  font-family:inherit;transition:all .2s}
+.stats-refresh:hover{border-color:rgba(255,255,255,.3);color:#fff}
+
+/* ── Stats avancées ── */
+.stat-section{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;padding:14px;margin-bottom:10px}
+.stat-section-title{font-size:10px;color:rgba(255,255,255,.4);text-transform:uppercase;
+  letter-spacing:.8px;margin-bottom:10px;font-weight:600}
+.stat-bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.stat-bar-label{font-size:11px;color:rgba(255,255,255,.6);width:38px;flex-shrink:0;text-align:right}
+.stat-bar-wrap{flex:1;height:5px;background:rgba(255,255,255,.1);border-radius:3px}
+.stat-bar-fill{height:5px;border-radius:3px;background:linear-gradient(90deg,#0056a4,#5bc4ff);transition:width .4s}
+.stat-bar-count{font-size:11px;color:rgba(255,255,255,.5);width:28px;text-align:right;flex-shrink:0}
+.stat-day-grid{display:flex;align-items:flex-end;gap:3px;height:48px;margin-bottom:4px}
+.stat-day-bar{flex:1;background:rgba(0,86,164,.4);border-radius:2px 2px 0 0;min-height:2px;transition:height .4s;position:relative}
+.stat-day-bar.today{background:linear-gradient(180deg,#5bc4ff,#0056a4)}
+.stat-day-bar:hover::after{content:attr(data-tip);position:absolute;bottom:110%;left:50%;
+  transform:translateX(-50%);background:#1a2d4a;color:#fff;font-size:9px;padding:2px 5px;
+  border-radius:4px;white-space:nowrap;pointer-events:none;z-index:10}
+.stat-day-labels{display:flex;gap:3px;margin-top:2px}
+.stat-day-lbl{flex:1;font-size:8px;color:rgba(255,255,255,.25);text-align:center}
+.stat-lang-pill{display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:4px 10px;font-size:11px;
+  color:rgba(255,255,255,.7);margin:0 4px 6px 0;display:inline-flex}
+
+/* ── Splash ── */
+#admin-splash{position:fixed;inset:0;z-index:9999;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .5s ease;overflow:hidden}
+#admin-splash.show{opacity:1;pointer-events:all}
+#admin-splash.hide{opacity:0}
+#splash-bg{position:absolute;inset:0}
+.splash-center{position:relative;z-index:2;text-align:center;
+  opacity:0;animation:splashReveal .8s ease .4s forwards}
+.splash-access{font-size:16px;color:rgba(255,215,0,.85);letter-spacing:5px;
+  text-transform:uppercase;font-family:monospace;font-weight:400;
+  text-shadow:0 0 20px rgba(255,200,0,.5),0 0 50px rgba(255,200,0,.2)}
+@keyframes splashReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes splashFloat{from{transform:translateY(0)}to{transform:translateY(-6px)}}
+
+/* ── Libramont-Chevigny : dégradé teal, sans thème WW2 (spécifique à Bastogne) ── */
+body{
+  background:linear-gradient(170deg, #04363D 0%, #063B42 45%, #00606C 100%) !important;
+  background-attachment:fixed !important;
+}
+
+/* ── Easter Egg ── */
+#easter-egg{position:fixed;inset:0;z-index:9999;background:#000;display:none;overflow:hidden}
+#easter-egg.show{display:block}
+#ee-stars{position:absolute;inset:0;width:100%;height:100%}
+#ee-perspective{position:absolute;inset:0;perspective:250px;perspective-origin:50% 20%;overflow:hidden}
+#ee-fade-top{position:absolute;top:0;left:0;right:0;height:30%;z-index:2;background:linear-gradient(to bottom,#000 50%,transparent)}
+#ee-crawl{position:absolute;left:5%;right:5%;top:100%;transform:rotateX(25deg);transform-origin:50% 0%;animation:swCrawl 85s linear forwards;text-align:center;font-family:Georgia,'Times New Roman',serif}
+@keyframes swCrawl{from{transform:rotateX(25deg) translateY(0)}to{transform:rotateX(25deg) translateY(-5400px)}}
+#ee-crawl h1{font-size:38px;font-weight:900;color:#f0c040;letter-spacing:4px;margin-bottom:8px}
+#ee-crawl h2{font-size:20px;color:#f0c040;letter-spacing:3px;margin-bottom:50px;opacity:.8;font-style:italic}
+#ee-crawl p{font-size:26px;color:#f0c040;line-height:1.9;margin-bottom:36px;text-align:center}
+#ee-crawl .ee-section{font-size:20px;color:#f0c040;letter-spacing:3px;text-transform:uppercase;margin:50px 0 20px;opacity:.75}
+#ee-credits{position:absolute;inset:0;z-index:3;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;pointer-events:none;background:#000;transition:opacity 4s ease}
+#ee-credits.show{opacity:1;pointer-events:all}
+#ee-credits-inner{text-align:center;font-family:Georgia,serif;color:#f0c040;animation:creditsZoom 4s ease-out forwards;opacity:0}
+@keyframes creditsZoom{0%{transform:scale(0.05);opacity:0}30%{opacity:1}100%{transform:scale(1);opacity:1}}
+#ee-credits h2{font-size:32px;font-weight:700;letter-spacing:3px;margin-bottom:6px}
+#ee-credits p{font-size:18px;color:rgba(240,192,64,.7);margin:4px 0;letter-spacing:1px}
+.ee-copy{font-size:13px;color:rgba(240,192,64,.35);margin-top:30px;letter-spacing:2px;line-height:1.8}
+.ee-tagline{font-size:20px;font-style:italic;color:#f0c040;margin-top:30px;letter-spacing:1px}
+#ee-close{position:fixed;bottom:24px;right:24px;z-index:10000;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.25);color:rgba(255,255,255,.7);font-size:14px;padding:8px 18px;border-radius:24px;cursor:pointer;letter-spacing:1px;font-family:monospace;display:none;opacity:0;transition:opacity .6s ease}
+/* Le bouton "Fermer" n'apparaît qu'avec les crédits finaux (infos NDdigitalconnect en bleu),
+   pour que la personne suive le générique jusqu'au bout avant de pouvoir fermer. */
+#ee-credits.show ~ #ee-close{display:block;opacity:1}
+@keyframes eeArrow{from{transform:rotate(45deg) translateY(0)}to{transform:rotate(45deg) translateY(6px)}}
+@keyframes splashReveal{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<noscript>
+  <div style="font-family:sans-serif;padding:20px;color:#1a2d0a;background:#f2f7ef;text-align:center">
+    <strong>Ville de Libramont-Chevigny</strong><br>L'assistant communal nécessite JavaScript.<br><br>
+    📞 <a href="tel:+3261621900">+32 61 62 19 00</a> &nbsp;|&nbsp;
+    📧 <a href="mailto:info@libramont.be">info@libramont.be</a>
+  </div>
+</noscript>
+
+<!-- HEADER -->
+<div class="page-header" style="background:linear-gradient(135deg,#8B1A1A 0%,#1B5FAD 100%);position:relative">
+  <div class="commune-logo" id="header-logo"></div>
+  <div class="commune-info">
+    <h1>Libramont-Chevigny</h1>
+    <p id="header-sub">L'Ardenne en Capitale &middot; 24h/24</p>
+  </div>
+  <!-- Étoile centrée absolument dans le bandeau -->
+  <span style="position:absolute;top:0;bottom:0;left:50%;transform:translateX(-50%);
+    display:flex;align-items:center;justify-content:center;
+    font-size:52px;color:rgba(255,255,255,.15);pointer-events:none;line-height:1">★</span>
+  <div class="status-badge">
+    <div class="status-dot"></div>
+    <span id="status-label">En ligne</span>
+  </div>
+</div>
+
+<!-- LANGUES -->
+<div class="lang-row">
+  <button class="lang-btn active" onclick="setLang('fr')">&#127467;&#127479; FR</button>
+  <button class="lang-btn" onclick="setLang('nl')">&#127475;&#127473; NL</button>
+  <button class="lang-btn" onclick="setLang('de')">&#127465;&#127466; DE</button>
+  <div class="horaires-banner" id="horaires-banner" aria-live="polite"><div class="horaires-dot"></div><span id="horaires-text">...</span></div>
+</div>
+
+<!-- Bandeau historique push — 48h -->
+<div id="push-strip">
+  <div class="push-strip-head" onclick="_pushToggle()">
+    <span style="font-size:15px;flex-shrink:0">🚨</span>
+    <span class="push-strip-latest" id="push-strip-latest"></span>
+    <span class="push-strip-badge" id="push-strip-badge"></span>
+    <span class="push-strip-arrow" id="push-strip-arrow">▼</span>
+  </div>
+  <div class="push-strip-body" id="push-strip-body">
+    <div id="push-strip-list"></div>
+    <div class="push-strip-footer">
+      <button class="push-strip-clear" onclick="_pushClearAll()">🗑 Tout effacer</button>
+    </div>
+  </div>
+</div>
+
+<main aria-label="Assistant Libramont-Chevigny">
+  <div class="chat-wrap">
+    <div class="chat-topbar">
+      <span class="svc-pill" id="svc-pill"></span>
+      <a class="phone-btn" href="tel:+3261621900" title="Appeler la commune" aria-label="Appeler la commune">
+        <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      </a>
+      <button class="voice-topbar-btn" id="voice-topbar-btn" onclick="_voiceTopbarClick()" aria-label="Mode vocal" title="Parler à l'assistant"><svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>🎙️ Vocal</button>
+      <button class="alert-btn" id="alert-btn" onclick="envoyerAlerte()" aria-label="Signaler une urgence"><div class="alert-dot"></div><span id="alert-label">🚨 Urgence</span></button>
+      <button class="reset-btn" id="reset-btn" onclick="resetChat()">← Retour</button>
+    </div>
+    <div class="msgs" id="messages" role="log" aria-live="polite" aria-label="Conversation">
+      <div class="ts" id="ts-label">Aujourd'hui</div>
+    </div>
+    <div class="input-bar">
+      <button class="mic-btn" id="mic-btn" onclick="_voiceInlineClick()" aria-label="Parler" title="Mode vocal">
+        <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+      </button>
+      <textarea id="chat-input" placeholder="Posez votre question..." rows="1" aria-label="Votre message"></textarea>
+      <button class="stop-btn" id="stop-btn" onclick="if(typeof stopVoicePlayback==='function')stopVoicePlayback()" aria-label="Arrêter la lecture" title="Arrêter">
+        <div class="stop-btn-icon"></div>
+        <div class="stop-btn-label">STOP</div>
+      </button>
+      <button class="send-btn" id="send-btn" onclick="interceptSend()" aria-label="Envoyer">
+        <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+      </button>
+    </div>
+  </div>
+</main>
+
+<!-- Voice overlay — module-voice.js -->
+<div id="voice-overlay" role="dialog" aria-modal="true" aria-label="Mode vocal">
+  <!-- Étoile décorative en fond -->
+  <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);font-size:340px;color:rgba(255,255,255,.02);pointer-events:none;line-height:1;user-select:none">★</div>
+  <div class="voice-orb-wrap">
+    <div class="voice-orb" id="voice-orb">
+      <img id="voice-orb-img" src="" alt="Assistant Libramont-Chevigny">
+    </div>
+    <div class="voice-status" id="voice-status">Appuyez pour parler</div>
+  </div>
+  <div class="voice-transcript" id="voice-transcript"></div>
+  <div style="width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;padding:14px 20px;padding-bottom:max(14px,env(safe-area-inset-bottom));background:rgba(0,0,0,.15)">
+    <div class="voice-controls">
+      <button class="voice-close-btn" onclick="if(typeof closeVoiceOverlay==='function')closeVoiceOverlay()" aria-label="Fermer">✕</button>
+      <button class="voice-mic-btn" id="voice-mic-btn" onclick="if(typeof toggleVoiceMic==='function')toggleVoiceMic()" aria-label="Parler/Arrêter">
+        <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.91-3c-.49 0-.9.36-.98.85C16.52 14.2 14.47 16 12 16s-4.52-1.8-4.93-4.15c-.08-.49-.49-.85-.98-.85-.61 0-1.09.54-1 1.14.49 3 2.89 5.35 5.91 5.78V20c0 .55.45 1 1 1s1-.45 1-1v-2.08c3.02-.43 5.42-2.78 5.91-5.78.1-.6-.39-1.14-1-1.14z"/></svg>
+      </button>
+      <button class="voice-close-btn" onclick="if(typeof stopVoicePlayback==='function')stopVoicePlayback()" aria-label="Arrêter lecture" title="⏹ Arrêter">⏹</button>
+    </div>
+    <div class="voice-hint">Chrome / Edge recommandé · 🎙️ parlez après le bip</div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="page-footer">
+  <div class="foot-chip">
+    <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+    <a href="tel:+3261621900">+32 61 62 19 00</a>
+  </div>
+  <div class="foot-chip">
+    <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+    <a href="mailto:info@libramont.be">info@libramont.be</a>
+  </div>
+  <div class="foot-chip" style="width:100%;justify-content:center;opacity:1;font-size:11.5px;gap:4px;color:rgba(255,255,255,.92);font-weight:500">
+    <svg viewBox="0 0 24 24" style="flex-shrink:0"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"></path></svg>
+    <span>Ne partagez pas d'informations sensibles dans le chat IA</span>
+  </div>
+  <div class="foot-chip" style="width:100%;justify-content:center;opacity:1;font-size:11px;gap:4px;color:rgba(255,255,255,.75)">
+    <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+    <span id="footer-disclaimer">L'IA peut faire des erreurs — vérifiez les informations importantes. Vos données ne sont pas conservées (RGPD).</span>
+  </div>
+</div>
+
+<!-- Modal alerte -->
+<div id="alert-overlay" role="dialog" aria-modal="true" aria-labelledby="alert-dlg-title" onclick="if(event.target===this)fermerModal()">
+  <div id="alert-dialog"></div>
+</div>
+
+<!-- SCRIPTS -->
+<script src="module4-prompt.js"></script>
+<script src="module6-api.js"></script>
+<!-- module-voice.js est préchargé en arrière-plan dès que la page est inactive
+     (cf. requestIdleCallback ci-dessous), avec _loadVoice() comme filet de
+     sécurité au clic si le préchargement n'est pas encore terminé -->
+<script>
+
+/* ═══ CONSTANTES ═══ */
+let isInitializing = true;
+const BLASON = '/LibramontBot/libramont-logo.png';
+
+/* ═══ CACHE DOM — évite les getElementById répétés ═══ */
+const DOM = {};
+document.addEventListener('DOMContentLoaded', function() {
+  DOM.messages     = DOM.messages || document.getElementById('messages');
+  DOM.input        = DOM.input || document.getElementById('chat-input');
+  DOM.sendBtn      = document.getElementById('send-btn');
+  DOM.resetBtn     = DOM.resetBtn || document.getElementById('reset-btn');
+  DOM.svcPill      = DOM.svcPill || document.getElementById('svc-pill');
+  DOM.tsLabel      = DOM.tsLabel || document.getElementById('ts-label');
+  DOM.statusLabel  = DOM.statusLabel || document.getElementById('status-label');
+  DOM.statusBadge  = DOM.statusBadge || document.querySelector('.status-badge');
+  DOM.headerSub    = DOM.headerSub || document.getElementById('header-sub');
+  DOM.botName      = DOM.botName || document.getElementById('bot-name-label');
+  DOM.disclaimer   = DOM.disclaimer || document.getElementById('footer-disclaimer');
+  DOM.horBanner    = DOM.horBanner || document.getElementById('horaires-banner');
+  DOM.horText      = DOM.horText || document.getElementById('horaires-text');
+  DOM.alertLabel   = DOM.alertLabel || document.getElementById('alert-label');
+  DOM.alertOverlay = DOM.alertOverlay || document.getElementById('alert-overlay');
+  DOM.alertDialog  = DOM.alertDialog || document.getElementById('alert-dialog');
+});
+
+/* ═══ LAZY LOADING VOCAL ═══ */
+let _voiceLoaded = false;
+let _voiceLoading = false;
+
+function _loadVoice(callback) {
+  if (_voiceLoaded) { if (callback) callback(); return; }
+  if (_voiceLoading) {
+    /* Attendre que le script finisse de charger */
+    var poll = setInterval(function() {
+      if (_voiceLoaded) { clearInterval(poll); if (callback) callback(); }
+    }, 50);
+    return;
+  }
+  _voiceLoading = true;
+  var s = document.createElement('script');
+  s.src = 'module-voice.js';
+  s.onload = function() { _voiceLoaded = true; _voiceLoading = false; if (callback) callback(); };
+  s.onerror = function() {
+    _voiceLoading = false;
+    console.warn('[LibramontBot] module-voice.js non chargé');
+  };
+  document.head.appendChild(s);
+}
+
+/* Pré-chargement en arrière-plan du module vocal.
+   Avant : module-voice.js n'était chargé qu'au moment du clic sur le micro,
+   ce qui ajoutait une requête réseau + un temps de parsing/exécution avant
+   même que la synthèse vocale ne puisse démarrer — c'était la principale
+   source du délai ressenti à l'arrivée sur la page vocale.
+   Maintenant : on lance ce chargement dès que la page est inactive (ou au
+   plus tard après un court délai), pendant que l'utilisateur regarde encore
+   l'écran de chat. Le script est ainsi déjà chargé, exécuté, et les voix
+   TTS déjà pré-chauffées (cf. _warmUpTTS dans module-voice.js) au moment où
+   l'utilisateur clique réellement sur le bouton vocal. */
+if ('requestIdleCallback' in window) {
+  requestIdleCallback(function() { _loadVoice(); }, { timeout: 3000 });
+} else {
+  setTimeout(function() { _loadVoice(); }, 1500);
+}
+
+/* Bouton vocal topbar → (déjà chargé en arrière-plan dans la quasi-totalité
+   des cas) ouvre directement l'overlay ; _loadVoice() reste en sécurité au
+   cas où le préchargement n'aurait pas encore terminé (connexion lente) */
+window._voiceTopbarClick = function() {
+  _loadVoice(function() {
+    if (typeof openVoiceOverlay === 'function') openVoiceOverlay();
+  });
+};
+
+/* Bouton micro inline → lazy load puis démarre la saisie vocale */
+window._voiceInlineClick = function() {
+  _loadVoice(function() {
+    if (typeof toggleInlineMic === 'function') toggleInlineMic();
+  });
+};
+
+/* ═══ FALLBACK OFFLINE ═══ */
+const OFFLINE_MSG = {
+  fr: '📵 Pas de connexion internet. Vérifiez votre réseau ou appelez-nous au **+32 61 62 19 00**.',
+  nl: '📵 Geen internetverbinding. Controleer uw netwerk of bel **+32 61 62 19 00**.',
+  en: '📵 No internet connection. Check your network or call **+32 61 62 19 00**.',
+  de: '📵 Keine Internetverbindung. Prüfen Sie Ihr Netzwerk oder rufen Sie **+32 61 62 19 00** an.',
+  es: '📵 Sin conexión a internet. Verifique su red o llame al **+32 61 62 19 00**.',
+  ar: '📵 لا يوجد اتصال بالإنترنت. تحقق من شبكتك أو اتصل على **+32 61 62 19 00**.'
+};
+
+window.addEventListener('offline', function() {
+  if (typeof setStatus === 'function') setStatus('offline');
+  if (typeof addMsg === 'function') addMsg('bot', OFFLINE_MSG[window.lang || 'fr']);
+});
+
+window.addEventListener('online', function() {
+  if (typeof setStatus === 'function') setStatus('online');
+});
+
+(function(){
+  document.getElementById('header-logo').innerHTML = '<img src="'+BLASON+'" alt="Logo Libramont-Chevigny">';
+})();
+
+/* ═══ LANGUES ═══ */
+let lang = (function() {
+  const nav = ((navigator.language || navigator.userLanguage || 'fr')).toLowerCase().split('-')[0];
+  return ['fr','nl','de'].includes(nav) ? nav : 'fr';
+})();
+
+const S = {
+  fr:{sub:'Assistant IA \u00b7 24h/24',status:'En ligne',botName:'Assistant numérique de Libramont-Chevigny',botNameShort:'Assistant',reset:'\u2190 Retour',ts:"Aujourd'hui",ph:'Posez votre question\u2026',svctitle:'Quel service cherchez-vous ?',disclaimer:"L'IA peut faire des erreurs \u2014 v\u00e9rifiez les informations importantes. Vos donn\u00e9es ne sont pas conserv\u00e9es (RGPD).",
+    welcome:"Bonjour, je suis l'assistante numérique de la **Ville de Libramont-Chevigny**. Quelle est votre question ?"},
+  nl:{sub:'AI-assistent \u00b7 24u/24',status:'Online',botName:'Gemeentelijke Assistent',botNameShort:'Assistent',reset:'\u2190 Terug',ts:'Vandaag',ph:'Stel uw vraag\u2026',svctitle:'Welke dienst zoekt u?',disclaimer:'AI kan fouten maken \u2014 controleer belangrijke informatie. Uw gegevens worden niet bewaard (AVG).',
+    welcome:'Goedendag, ik ben de assistent van de **Stad Libramont-Chevigny**. Wat is uw vraag?'},
+  de:{sub:'KI-Assistent \u00b7 24h/24',status:'Online',botName:'Gemeindeassistent',botNameShort:'Assistent',reset:'\u2190 Zur\u00fcck',ts:'Heute',ph:'Stellen Sie Ihre Frage\u2026',svctitle:'Welchen Dienst suchen Sie?',disclaimer:'KI kann Fehler machen \u2014 wichtige Infos bitte pr\u00fcfen. Ihre Daten werden nicht gespeichert (DSGVO).',
+    welcome:'Guten Tag, ich bin der Assistent der **Stadt Libramont-Chevigny**. Was ist Ihre Frage?'}
+};
+
+const SVCS = {
+  fr:[
+    {id:'population',icon:'\ud83e\udeba',label:'Population & \u00c9tat civil'},
+    {id:'urbanisme',icon:'\ud83c\udfd7\ufe0f',label:'Urbanisme & Travaux'},
+    {id:'finances',icon:'\ud83d\udcb6',label:'Finances & Taxes'},
+    {id:'env',icon:'\ud83c\udf3f',label:'Environnement & D\u00e9chets'},
+    {id:'social',icon:'\ud83e\udd1d',label:'CPAS & Social'},
+    {id:'enfance',icon:'\ud83d\udc76',label:'Enfance & Enseignement'},
+    {id:'salles',icon:'\ud83c\udfd9\ufe0f',label:'Location de salles'},
+    {id:'cimetiere',icon:'\ud83d\udd4a\ufe0f',label:'Cimeti\u00e8res'},
+    {id:'events',icon:'\ud83c\udfaa',label:'\u00c9v\u00e9nements'},
+    {id:'rh',icon:'\ud83d\udcbc',label:'Emploi & Stages'},
+    {id:'college',icon:'\ud83d\udccb',label:'Coll\u00e8ge communal'},
+    {id:'autre',icon:'\ud83d\udcac',label:'Autre question'},
+  ],
+  nl:[
+    {id:'population',icon:'\ud83e\udeba',label:'Bevolking & Burgerlijke Stand'},
+    {id:'urbanisme',icon:'\ud83c\udfd7\ufe0f',label:'Stedenbouw & Werken'},
+    {id:'finances',icon:'\ud83d\udcb6',label:'Financi\u00ebn & Belastingen'},
+    {id:'env',icon:'\ud83c\udf3f',label:'Milieu & Afval'},
+    {id:'social',icon:'\ud83e\udd1d',label:'OCMW & Sociale Diensten'},
+    {id:'enfance',icon:'\ud83d\udc76',label:'Kinderopvang & Onderwijs'},
+    {id:'salles',icon:'\ud83c\udfd9\ufe0f',label:'Zaalverhuur'},
+    {id:'cimetiere',icon:'\ud83d\udd4a\ufe0f',label:'Begraafplaatsen'},
+    {id:'events',icon:'\ud83c\udfaa',label:'Evenementen'},
+    {id:'rh',icon:'\ud83d\udcbc',label:'Werk & Stages'},
+    {id:'college',icon:'\ud83d\udccb',label:'Gemeenteraad'},
+    {id:'autre',icon:'\ud83d\udcac',label:'Andere vraag'},
+  ],
+  de:[
+    {id:'population',icon:'\ud83e\udeba',label:'Bev\u00f6lkerung & Standesamt'},
+    {id:'urbanisme',icon:'\ud83c\udfd7\ufe0f',label:'Stadtplanung & Bauwesen'},
+    {id:'finances',icon:'\ud83d\udcb6',label:'Finanzen & Steuern'},
+    {id:'env',icon:'\ud83c\udf3f',label:'Umwelt & Abfall'},
+    {id:'social',icon:'\ud83e\udd1d',label:'\u00d6SHZ & Soziales'},
+    {id:'enfance',icon:'\ud83d\udc76',label:'Kinderbetreuung & Schule'},
+    {id:'salles',icon:'\ud83c\udfd9\ufe0f',label:'Saalmietung'},
+    {id:'cimetiere',icon:'\ud83d\udd4a\ufe0f',label:'Friedh\u00f6fe'},
+    {id:'events',icon:'\ud83c\udfaa',label:'Veranstaltungen'},
+    {id:'rh',icon:'\ud83d\udcbc',label:'Stellen & Praktika'},
+    {id:'college',icon:'\ud83d\udccb',label:'Gemeinderat'},
+    {id:'autre',icon:'\ud83d\udcac',label:'Andere Frage'},
+  ]
+};
+
+const QR = {
+  fr:{
+    population:['\ud83e\udeba Carte identit\u00e9 \u2014 tarif','\ud83d\udec2 Passeport \u2014 tarif','\ud83d\udcec D\u00e9m\u00e9nagement','\ud83d\udcc4 Attestation r\u00e9sidence'],
+    urbanisme:['\ud83d\udcd0 Co\u00fbt permis','\ud83d\udd0e Terrain constructible ?','\ud83d\udea7 \u00c9tapes permis','\ud83c\udfe0 Contr\u00f4le implantation'],
+    finances:['\ud83c\udfe0 Pr\u00e9compte immobilier','\ud83c\udfe1 Taxe 2e r\u00e9sidence','\ud83d\uddd1\ufe0f Taxe d\u00e9chets','\ud83d\udcde Contact finances'],
+    env:['\ud83d\uddd1\ufe0f Collecte poubelles','\ud83d\udecd\ufe0f Sacs PMC \u2014 prix','\u267b\ufe0f D\u00e9p\u00f4t sauvage','\ud83d\udc00 Nuisibles / rats'],
+    social:['\ud83d\ude96 Taxi social','\ud83c\udf7d\ufe0f Repas \u00e0 domicile','\u26a1 Aide \u00e9nergie','\u2696\ufe0f Permanence juridique'],
+    enfance:['\ud83c\udf7c Tarifs cr\u00e8che','\ud83c\udfae ATL \u2014 tarifs','\ud83c\udfd5\ufe0f Plaines de vacances','\ud83c\udfeb \u00c9coles communales'],
+    salles:['\ud83c\udfd9\ufe0f Tarifs salles','\ud83d\udcc5 Disponibilit\u00e9s','\ud83d\udcb3 R\u00e9server en ligne','\ud83c\udfdf\ufe0f Salle Tonny'],
+    cimetiere:['\u26b0\ufe0f Tarif inhumation','\ud83e\udea6 Concession','\ud83c\udf38 Columbarium','\ud83d\udd4a\ufe0f Exhumation'],
+    events:['\ud83c\udfaa Organiser \u00e9v\u00e9nement','\ud83d\udccb Autorisation f\u00eate','\ud83e\ude91 Tables & chaises','\ud83d\udce2 Annoncer sur le site'],
+    rh:['\ud83d\udcbc Offres d emploi','\ud83c\udf93 Stage','\ud83d\udc69\u200d\ud83c\udf93 Job \u00e9tudiant','\ud83d\udce7 Candidature spontan\u00e9e'],
+    college:['\ud83d\udccb R\u00e9sultats & bulletins','\ud83d\udcc5 Calendrier scolaire','\ud83d\udcde Contact direction','\ud83c\udfeb Infos \u00e9tablissement'],
+    autre:['\ud83d\udcde Horaires commune','\ud83d\udce7 Envoyer un email','\ud83d\udd0c Borne recharge VE','\ud83d\udda8\ufe0f Tarif photocopie'],
+  },
+  nl:{
+    population:['\ud83e\udeba Tarief ID-kaart','\ud83d\udec2 Tarief paspoort','\ud83d\udcec Verhuis','\ud83d\udcc4 Bewijs van verblijf'],
+    urbanisme:['\ud83d\udcd0 Kosten vergunning','\ud83d\udd0e Bouwgrond?','\ud83d\udea7 Procedure stap-voor-stap','\ud83c\udfe0 Controlemeting'],
+    finances:['\ud83c\udfe0 Onroerende voorheffing','\ud83c\udfe1 Belasting 2e verblijf','\ud83d\uddd1\ufe0f Afvalbelasting','\ud83d\udcde Contact financi\u00ebn'],
+    env:['\ud83d\uddd1\ufe0f Ophaaldag afval','\ud83d\udecd\ufe0f PMC-zakken','\u267b\ufe0f Sluikstort','\ud83d\udc00 Ongedierte'],
+    social:['\ud83d\ude96 Sociale taxi','\ud83c\udf7d\ufe0f Maaltijden thuis','\u26a1 Energiesteun','\u2696\ufe0f Juridisch advies'],
+    enfance:['\ud83c\udf7c Tarieven cr\u00e8che','\ud83c\udfae BSO tarieven','\ud83c\udfd5\ufe0f Vakantiekampen','\ud83c\udfeb Scholen'],
+    salles:['\ud83c\udfd9\ufe0f Zaaltarieven','\ud83d\udcc5 Beschikbaarheid','\ud83d\udcb3 Online reserveren','\ud83c\udfdf\ufe0f Zaal Tonny'],
+    cimetiere:['\u26b0\ufe0f Begrafeniskosten','\ud83e\udea6 Grafconcessie','\ud83c\udf38 Columbarium','\ud83d\udd4a\ufe0f Opgraving'],
+    events:['\ud83c\udfaa Evenement organiseren','\ud83d\udccb Vergunning feest','\ud83e\ude91 Tafels & stoelen','\ud83d\udce2 Aankondigen'],
+    rh:['\ud83d\udcbc Vacatures','\ud83c\udf93 Stage','\ud83d\udc69\u200d\ud83c\udf93 Studentenjob','\ud83d\udce7 Open sollicitatie'],
+    college:['\ud83d\udccb Resultaten & rapporten','\ud83d\udcc5 Schoolkalender','\ud83d\udcde Contact directie','\ud83c\udfeb Info school'],
+    autre:['\ud83d\udcde Openingsuren','\ud83d\udce7 E-mail sturen','\ud83d\udd0c EV-laadpaal','\ud83d\udda8\ufe0f Fotokopie tarief'],
+  },
+  en:{
+    population:['\ud83e\udeba ID card fee','\ud83d\udec2 Passport fee','\ud83d\udcec Moving address','\ud83d\udcc4 Residence certificate'],
+    urbanisme:['\ud83d\udcd0 Permit cost','\ud83d\udd0e Buildable land?','\ud83d\udea7 Permit procedure','\ud83c\udfe0 Building inspection'],
+    finances:['\ud83c\udfe0 Property tax','\ud83c\udfe1 Second home tax','\ud83d\uddd1\ufe0f Waste tax','\ud83d\udcde Finance contact'],
+    env:['\ud83d\uddd1\ufe0f Bin collection day','\ud83d\udecd\ufe0f PMC bags','\u267b\ufe0f Illegal dumping','\ud83d\udc00 Pests / rats'],
+    social:['\ud83d\ude96 Social taxi','\ud83c\udf7d\ufe0f Meals at home','\u26a1 Energy support','\u2696\ufe0f Legal advice'],
+    enfance:['\ud83c\udf7c Nursery fees','\ud83c\udfae After-school fees','\ud83c\udfd5\ufe0f Holiday camps','\ud83c\udfeb Schools'],
+    salles:['\ud83c\udfd9\ufe0f Hall rates','\ud83d\udcc5 Availability','\ud83d\udcb3 Book online','\ud83c\udfdf\ufe0f Tonny hall'],
+    cimetiere:['\u26b0\ufe0f Burial fee','\ud83e\udea6 Concession','\ud83c\udf38 Columbarium','\ud83d\udd4a\ufe0f Exhumation'],
+    events:['\ud83c\udfaa Organise event','\ud83d\udccb Event permit','\ud83e\ude91 Tables & chairs','\ud83d\udce2 Announce on website'],
+    rh:['\ud83d\udcbc Job offers','\ud83c\udf93 Internship','\ud83d\udc69\u200d\ud83c\udf93 Student job','\ud83d\udce7 Spontaneous application'],
+    college:['\ud83d\udccb Results & reports','\ud83d\udcc5 School calendar','\ud83d\udcde Contact director','\ud83c\udfeb School info'],
+    autre:['\ud83d\udcde Opening hours','\ud83d\udce7 Send email','\ud83d\udd0c EV charging','\ud83d\udda8\ufe0f Photocopy price'],
+  },
+  ar:{
+    population:['\ud83e\udeba \u0631\u0633\u0648\u0645 \u0628\u0637\u0627\u0642\u0629 \u0627\u0644\u0647\u0648\u064a\u0629','\ud83d\udec2 \u0631\u0633\u0648\u0645 \u062c\u0648\u0627\u0632 \u0627\u0644\u0633\u0641\u0631','\ud83d\udcec \u062a\u063a\u064a\u064a\u0631 \u0627\u0644\u0639\u0646\u0648\u0627\u0646','\ud83d\udcc4 \u0634\u0647\u0627\u062f\u0629 \u0627\u0644\u0625\u0642\u0627\u0645\u0629'],
+    urbanisme:['\ud83d\udcd0 \u062a\u0643\u0644\u0641\u0629 \u0627\u0644\u062a\u0635\u0631\u064a\u062d','\ud83d\udd0e \u0623\u0631\u0636 \u0644\u0644\u0628\u0646\u0627\u0621\u061f','\ud83d\udea7 \u062e\u0637\u0648\u0627\u062a \u0627\u0644\u062a\u0635\u0631\u064a\u062d','\ud83c\udfe0 \u0645\u0631\u0627\u0642\u0628\u0629 \u0627\u0644\u0645\u0648\u0642\u0639'],
+    finances:['\ud83c\udfe0 \u0627\u0644\u0636\u0631\u064a\u0628\u0629 \u0627\u0644\u0639\u0642\u0627\u0631\u064a\u0629','\ud83c\udfe1 \u0636\u0631\u064a\u0628\u0629 \u0627\u0644\u0625\u0642\u0627\u0645\u0629 \u0627\u0644\u062b\u0627\u0646\u064a\u0629','\ud83d\uddd1\ufe0f \u0636\u0631\u064a\u0628\u0629 \u0627\u0644\u0646\u0641\u0627\u064a\u0627\u062a','\ud83d\udcde \u0627\u062a\u0635\u0627\u0644 \u0627\u0644\u0645\u0627\u0644\u064a\u0629'],
+    env:['\ud83d\uddd1\ufe0f \u064a\u0648\u0645 \u062c\u0645\u0639 \u0627\u0644\u0642\u0645\u0627\u0645\u0629','\ud83d\udecd\ufe0f \u0623\u0643\u064a\u0627\u0633 PMC','\u267b\ufe0f \u0631\u0645\u064a \u0645\u062e\u0627\u0644\u0641','\ud83d\udc00 \u0622\u0641\u0627\u062a'],
+    social:['\ud83d\ude96 \u0633\u064a\u0627\u0631\u0629 \u0623\u062c\u0631\u0629 \u0627\u062c\u062a\u0645\u0627\u0639\u064a\u0629','\ud83c\udf7d\ufe0f \u0648\u062c\u0628\u0627\u062a \u0645\u0646\u0632\u0644\u064a\u0629','\u26a1 \u062f\u0639\u0645 \u0627\u0644\u0637\u0627\u0642\u0629','\u2696\ufe0f \u0627\u0633\u062a\u0634\u0627\u0631\u0629 \u0642\u0627\u0646\u0648\u0646\u064a\u0629'],
+    enfance:['\ud83c\udf7c \u0631\u0633\u0648\u0645 \u0627\u0644\u062d\u0636\u0627\u0646\u0629','\ud83c\udfae \u0627\u0644\u0631\u0639\u0627\u064a\u0629 \u0628\u0639\u062f \u0627\u0644\u0645\u062f\u0631\u0633\u0629','\ud83c\udfd5\ufe0f \u0645\u062e\u064a\u0645\u0627\u062a \u0627\u0644\u0639\u0637\u0644\u0627\u062a','\ud83c\udfeb \u0627\u0644\u0645\u062f\u0627\u0631\u0633'],
+    salles:['\ud83c\udfd9\ufe0f \u0623\u0633\u0639\u0627\u0631 \u0627\u0644\u0642\u0627\u0639\u0627\u062a','\ud83d\udcc5 \u0627\u0644\u062a\u0648\u0641\u0631','\ud83d\udcb3 \u0627\u0644\u062d\u062c\u0632 \u0639\u0628\u0631 \u0627\u0644\u0625\u0646\u062a\u0631\u0646\u062a','\ud83c\udfdf\ufe0f \u0642\u0627\u0639\u0629 \u062a\u0648\u0646\u064a'],
+    cimetiere:['\u26b0\ufe0f \u0631\u0633\u0648\u0645 \u0627\u0644\u062f\u0641\u0646','\ud83e\udea6 \u0639\u0642\u062f \u0627\u0644\u062f\u0641\u0646','\ud83c\udf38 \u0643\u0648\u0644\u0648\u0645\u0628\u0627\u0631\u064a\u0648\u0645','\ud83d\udd4a\ufe0f \u0646\u0628\u0634 \u0627\u0644\u0631\u0641\u0627\u062a'],
+    events:['\ud83c\udfaa \u062a\u0646\u0638\u064a\u0645 \u0641\u0639\u0627\u0644\u064a\u0629','\ud83d\udccb \u0625\u0630\u0646 \u0627\u062d\u062a\u0641\u0627\u0644','\ud83e\ude91 \u0637\u0627\u0648\u0644\u0627\u062a \u0648\u0643\u0631\u0627\u0633\u064a','\ud83d\udce2 \u0625\u0639\u0644\u0627\u0646 \u0627\u0644\u0641\u0639\u0627\u0644\u064a\u0629'],
+    rh:['\ud83d\udcbc \u0641\u0631\u0635 \u0627\u0644\u0639\u0645\u0644','\ud83c\udf93 \u062a\u062f\u0631\u064a\u0628','\ud83d\udc69\u200d\ud83c\udf93 \u0648\u0638\u064a\u0641\u0629 \u0637\u0627\u0644\u0628','\ud83d\udce7 \u0637\u0644\u0628 \u0639\u0641\u0648\u064a'],
+    college:['\ud83d\udccb \u0627\u0644\u0646\u062a\u0627\u0626\u062c \u0648\u0627\u0644\u062a\u0642\u0627\u0631\u064a\u0631','\ud83d\udcc5 \u0627\u0644\u062a\u0642\u0648\u064a\u0645 \u0627\u0644\u0645\u062f\u0631\u0633\u064a','\ud83d\udcde \u0627\u0644\u0627\u062a\u0635\u0627\u0644 \u0628\u0627\u0644\u0625\u062f\u0627\u0631\u0629','\ud83c\udfeb \u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0627\u0644\u0645\u062f\u0631\u0633\u0629'],
+    autre:['\ud83d\udcde \u0633\u0627\u0639\u0627\u062a \u0627\u0644\u0639\u0645\u0644','\ud83d\udce7 \u0625\u0631\u0633\u0627\u0644 \u0628\u0631\u064a\u062f','\ud83d\udd0c \u0634\u062d\u0646 \u0627\u0644\u0633\u064a\u0627\u0631\u0627\u062a','\ud83d\udda8\ufe0f \u0633\u0639\u0631 \u0627\u0644\u062a\u0635\u0648\u064a\u0631'],
+  },
+  de:{
+    population:['\ud83e\udeba Personalausweis \u2014 Geb\u00fchr','\ud83d\udec2 Reisepass \u2014 Geb\u00fchr','\ud83d\udcec Ummeldung','\ud83d\udcc4 Wohnsitzbescheinigung'],
+    urbanisme:['\ud83d\udcd0 Baugenehmigung \u2014 Kosten','\ud83d\udd0e Bauland?','\ud83d\udea7 Genehmigungsverfahren','\ud83c\udfe0 Lagepr\u00fcfung'],
+    finances:['\ud83c\udfe0 Grundsteuer','\ud83c\udfe1 Zweitwohnsitzsteuer','\ud83d\uddd1\ufe0f Abfallsteuer','\ud83d\udcde Finanzkontakt'],
+    env:['\ud83d\uddd1\ufe0f Abholungstag','\ud83d\udecd\ufe0f PMC-S\u00e4cke','\u267b\ufe0f Illegale Ablagerung','\ud83d\udc00 Sch\u00e4dlinge'],
+    social:['\ud83d\ude96 Sozialtaxi','\ud83c\udf7d\ufe0f Essen auf R\u00e4dern','\u26a1 Energiehilfe','\u2696\ufe0f Rechtsberatung'],
+    enfance:['\ud83c\udf7c Krippengeb\u00fchren','\ud83c\udfae Hortgeb\u00fchren','\ud83c\udfd5\ufe0f Ferienlager','\ud83c\udfeb Gemeindeschulen'],
+    salles:['\ud83c\udfd9\ufe0f Saalpreise','\ud83d\udcc5 Verf\u00fcgbarkeit','\ud83d\udcb3 Online reservieren','\ud83c\udfdf\ufe0f Saal Tonny'],
+    cimetiere:['\u26b0\ufe0f Bestattungsgeb\u00fchr','\ud83e\udea6 Konzession','\ud83c\udf38 Kolumbarium','\ud83d\udd4a\ufe0f Exhumierung'],
+    events:['\ud83c\udfaa Veranstaltung organisieren','\ud83d\udccb Genehmigung Fest','\ud83e\ude91 Tische & St\u00fchle','\ud83d\udce2 Ank\u00fcndigung'],
+    rh:['\ud83d\udcbc Stellenangebote','\ud83c\udf93 Praktikum','\ud83d\udc69\u200d\ud83c\udf93 Studentenjob','\ud83d\udce7 Initiativbewerbung'],
+    college:['\ud83d\udccb Ergebnisse & Zeugnisse','\ud83d\udcc5 Schulkalender','\ud83d\udcde Kontakt Direktion','\ud83c\udfeb Schulinfos'],
+    autre:['\ud83d\udcde \u00d6ffnungszeiten','\ud83d\udce7 E-Mail senden','\ud83d\udd0c E-Auto laden','\ud83d\udda8\ufe0f Kopierpreis'],
+  },
+  es:{
+    population:['\ud83e\udeba DNI \u2014 tarifa','\ud83d\udec2 Pasaporte \u2014 tarifa','\ud83d\udcec Cambio de domicilio','\ud83d\udcc4 Certificado residencia'],
+    urbanisme:['\ud83d\udcd0 Coste permiso obras','\ud83d\udd0e \u00bfTerreno edificable?','\ud83d\udea7 Procedimiento permiso','\ud83c\udfe0 Control implantaci\u00f3n'],
+    finances:['\ud83c\udfe0 Impuesto inmueble','\ud83c\udfe1 Impuesto 2\u00aa residencia','\ud83d\uddd1\ufe0f Tasa residuos','\ud83d\udcde Contacto finanzas'],
+    env:['\ud83d\uddd1\ufe0f D\u00eda recogida basura','\ud83d\udecd\ufe0f Bolsas PMC','\u267b\ufe0f Vertido ilegal','\ud83d\udc00 Plagas'],
+    social:['\ud83d\ude96 Taxi social','\ud83c\udf7d\ufe0f Comidas a domicilio','\u26a1 Ayuda energ\u00eda','\u2696\ufe0f Asesor\u00eda jur\u00eddica'],
+    enfance:['\ud83c\udf7c Tarifas guarder\u00eda','\ud83c\udfae Tarifas extraescolar','\ud83c\udfd5\ufe0f Campamentos','\ud83c\udfeb Colegios municipales'],
+    salles:['\ud83c\udfd9\ufe0f Precios salas','\ud83d\udcc5 Disponibilidad','\ud83d\udcb3 Reservar online','\ud83c\udfdf\ufe0f Sala Tonny'],
+    cimetiere:['\u26b0\ufe0f Tarifa entierro','\ud83e\udea6 Concesi\u00f3n','\ud83c\udf38 Columbario','\ud83d\udd4a\ufe0f Exhumaci\u00f3n'],
+    events:['\ud83c\udfaa Organizar evento','\ud83d\udccb Permiso fiesta','\ud83e\ude91 Mesas & sillas','\ud83d\udce2 Anunciar en web'],
+    rh:['\ud83d\udcbc Ofertas de empleo','\ud83c\udf93 Pr\u00e1cticas','\ud83d\udc69\u200d\ud83c\udf93 Trabajo estudiante','\ud83d\udce7 Candidatura espont\u00e1nea'],
+    college:['\ud83d\udccb Resultados & boletines','\ud83d\udcc5 Calendario escolar','\ud83d\udcde Contacto direcci\u00f3n','\ud83c\udfeb Info centro'],
+    autre:['\ud83d\udcde Horarios municipio','\ud83d\udce7 Enviar email','\ud83d\udd0c Carga VE','\ud83d\udda8\ufe0f Precio fotocopia'],
+  }
+};
+
+function getSvcs(l){ return SVCS[l] || SVCS.fr; }
+function getQR(){ return (QR[lang]||QR.fr)[selectedSvc] || null; }
+
+/* ═══ SETLANG ═══ */
+function setLang(l) {
+  lang = l;
+  window.lang = l;
+  document.querySelectorAll('.lang-btn').forEach(function(b){
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(l));
+  });
+  const s = S[l] || S.fr;
+  const subEl = DOM.headerSub || document.getElementById('header-sub');
+  if (subEl) subEl.textContent = s.sub;
+  const disclaimerEl = DOM.disclaimer || document.getElementById('footer-disclaimer');
+  if (disclaimerEl) disclaimerEl.textContent = s.disclaimer;
+  const nameEl = DOM.botName || document.getElementById('bot-name-label');
+  if (nameEl) {
+    const isMobile = window.innerWidth <= 480;
+    nameEl.textContent = isMobile ? (s.botNameShort || 'Assistant') : s.botName;
+  }
+  (DOM.resetBtn || document.getElementById('reset-btn')).textContent= s.reset;
+  (DOM.tsLabel || document.getElementById('ts-label')).textContent= s.ts;
+  (DOM.alertLabel || document.getElementById('alert-label')).textContent= '\ud83d\udea8 ' + (l==='nl'?'Dringend':l==='de'?'Notfall':'Urgence');
+  var inputEl = DOM.input || document.getElementById('chat-input');
+  if (inputEl) {
+    inputEl.lang = l;
+    inputEl.placeholder = s.ph;
+  }
+
+  updateHoraires();
+  resetChat();
+}
+
+/* ═══ addMsg — exposé sur window pour module6 ═══ */
+function addMsg(role, text, qrs) {
+  const area = DOM.messages || document.getElementById('messages');
+  const row  = document.createElement('div');
+  row.className = 'msg-row ' + (role === 'user' ? 'user' : 'bot');
+  const isRtl = false; /* FR/NL/DE uniquement, jamais RTL */
+
+  /* ── Mapping téléphone → email pour la commune ──
+     TODO : à compléter avec les numéros directs des autres services
+     (CPAS, urbanisme, etc.) au fur et à mesure de la construction du
+     prompt — seul le numéro général est confirmé pour l'instant. */
+  var PHONE_EMAIL = {
+    '+3261222118': 'info@libramont.be',   /* Ville — numéro principal */
+    '+3270245245': null,                      /* Centre antipoison (national)*/
+  };
+
+  /* Parse markdown + téléphones + emails cliquables
+     Ordre : tokens d'abord → échappement HTML → markdown → restauration */
+  function parseMarkdown(raw) {
+    var tokens = [], n = 0;
+
+    /* 1. Extraire les URLs markdown [texte](url) avant tout */
+    var t = raw.replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g, function(_, txt, url) {
+      var tok = 'ODETKN' + (n++) + 'X';
+      tokens.push({tok: tok, html: '<a href="' + url + '" target="_blank" rel="noopener">' + txt + '</a>'});
+      return tok;
+    });
+
+    /* 2. Extraire les URLs brutes */
+    t = t.replace(/(https?:\/\/[^\s<"]+)/g, function(url) {
+      var tok = 'ODETKN' + (n++) + 'X';
+      tokens.push({tok: tok, html: '<a href="' + url + '" target="_blank" rel="noopener">' + url + '</a>'});
+      return tok;
+    });
+
+    /* 3. Extraire les numéros de téléphone belges (avant échappement) */
+    t = t.replace(/(\+32[\s.\-/]?(?:\d[\s.\-/]?){7,9}\d|\b0\d{1,3}[\s.\-/]?\d{2}[\s.\-/]?\d{2}[\s.\-/]?\d{2})/g, function(p) {
+      var clean = p.replace(/[\s.\-/]/g, '');
+      var intl  = clean.startsWith('0') ? '+32' + clean.slice(1) : clean;
+      var email = PHONE_EMAIL[intl];
+      var inner = '<a href="tel:' + intl + '" style="font-weight:600;color:var(--blue)">📞\u202f' + p + '</a>';
+      if (email) {
+        inner += '\u2002<a href="mailto:' + email + '" style="font-size:12px;color:var(--blue)">✉\u202f' + email + '</a>';
+      }
+      /* Envelopper dans un span nowrap pour éviter la coupure en milieu de numéro */
+      var tok = 'ODETKN' + (n++) + 'X';
+      tokens.push({tok: tok, html: '<span style="white-space:nowrap">' + inner + '</span>'});
+      return tok;
+    });
+
+    /* 4. Extraire les adresses email — regex large pour tous les formats IA */
+    t = t.replace(/([a-zA-Z0-9][^\s@<>()\[\]"\\,;:]*@[a-zA-Z0-9][^\s@<>()\[\]"\\,;:]*\.[a-zA-Z]{2,})/g, function(email) {
+      var clean = email.replace(/[.,;:!?]+$/, '').replace(/[\u2013\u2014\u2010\u2012]/g, '-');
+      var tok = 'ODETKN' + (n++) + 'X';
+      tokens.push({tok: tok, html: '<span style="white-space:nowrap"><a href="mailto:' + clean + '" style="color:var(--blue)">✉\u202f' + clean + '</a></span>'});
+      return tok;
+    });
+
+    /* 5. Échapper HTML */
+    t = t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+    /* 6. Markdown gras / italique / sauts de ligne */
+    t = t
+      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*(.*?)\*/g,     '<em>$1</em>')
+      .replace(/\n/g,            '<br>');
+
+    /* 7. Restaurer les tokens (non échappés car pas de & < >) */
+    tokens.forEach(function(item) {
+      t = t.split(item.tok).join(item.html);
+    });
+
+    return t;
+  }
+
+  if (role === 'user') {
+    row.innerHTML =
+      '<div><div class="bbl user' + (isRtl?' rtl':'') + '">' + parseMarkdown(text) + '</div></div>' +
+      '<div class="av u"><svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg></div>';
+  } else {
+    const bblEl = document.createElement('div');
+    bblEl.className = 'bbl bot' + (isRtl ? ' rtl' : '');
+    bblEl.innerHTML = parseMarkdown(text);
+    /* Texte brut de la réponse (avant ajout des boutons like/dislike et
+       réponses rapides ci-dessous) — utilisé par module-voice.js pour la
+       transcription/lecture vocale, afin de ne jamais capturer le contenu
+       de ces boutons (ex: les emoji 👍/👎) via innerText. */
+    bblEl.dataset.rawText = text;
+    if (qrs && qrs.length) {
+      const qrWrap = document.createElement('div');
+      qrWrap.className = 'qr-wrap';
+      /* Tracker des QR déjà utilisés pour ce service */
+      if (!window._usedQR) window._usedQR = new Set();
+      qrs.filter(function(q){ return !window._usedQR.has(q); }).forEach(function(q) {
+        const btn = document.createElement('button');
+        btn.className = 'qr-btn';
+        btn.textContent = q;
+        btn.onclick = function(){
+          window._usedQR.add(q);
+          /* Masquer ce bouton dans toutes les qr-wrap visibles */
+          document.querySelectorAll('.qr-btn').forEach(function(b){
+            if (b.textContent === q) b.style.display = 'none';
+          });
+          sendMsg(q);
+        };
+        qrWrap.appendChild(btn);
+      });
+      if (qrWrap.children.length) bblEl.appendChild(qrWrap);
+    }
+    if (!isInitializing) addFeedback(bblEl, text);
+    const inner = document.createElement('div');
+    inner.appendChild(bblEl);
+    if (isInitializing) {
+      row.innerHTML = '<div class="av" style="background:linear-gradient(170deg,#C62626 0%,#1B5FAD 100%);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden"><span style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:rgba(255,255,255,.25);font-size:22px;line-height:1">★</span><span style="color:#fff;font-weight:900;font-size:13px;font-family:sans-serif;position:relative;z-index:1">B</span></div>';
+    }
+    row.appendChild(inner);
+  }
+
+  area.appendChild(row);
+  if (!isInitializing) {
+    if (role === 'bot') {
+      setTimeout(function() {
+        row.scrollIntoView({ block: 'start', behavior: 'instant' });
+      }, 80);
+    } else {
+      area.scrollTop = area.scrollHeight;
+    }
+  }
+}
+window.addMsg = addMsg;
+
+function showSvcSelector(){
+  const area = DOM.messages || document.getElementById('messages');
+  const w = document.createElement('div');
+  w.id = 'svc-sel-widget';
+  const s = S[lang] || S.fr;
+  w.innerHTML = '<div class="svc-selector" style="animation-delay:.15s"><div class="svc-selector-title">'+s.svctitle+'</div><div class="svc-grid">'
+    + getSvcs(lang).map(function(sv){ return '<button class="svc-btn" onclick="pickSvc(\''+sv.id+'\',\''+sv.label.replace(/'/g,"\\'")+'\')">'
+      + '<span class="svc-icon">'+sv.icon+'</span><span>'+sv.label+'</span></button>'; }).join('')
+    + '</div></div>';
+  area.appendChild(w);
+}
+
+let selectedSvc = null;
+window.selectedSvc = null;
+
+function pickSvc(id, label){
+  selectedSvc = id;
+  window.selectedSvc = id;
+  _statTopic(id); /* ── tracking sujet ── */
+  const sel = document.getElementById('svc-sel-widget');
+  if (sel) sel.remove();
+  const svc = getSvcs(lang).find(function(s){ return s.id === id; });
+  const pill = DOM.svcPill || document.getElementById('svc-pill');
+  pill.textContent = (svc ? svc.icon : '') + ' ' + label;
+  pill.classList.add('on');
+  addMsg('user', (svc ? svc.icon : '') + ' ' + label);
+  const svcMsg = {fr:'Je souhaite des informations sur le service : ',nl:'Ik wil informatie over de dienst: ',en:'I would like information about the service: ',ar:'\u0623\u0631\u064a\u062f \u0645\u0639\u0644\u0648\u0645\u0627\u062a \u0639\u0646 \u0627\u0644\u062e\u062f\u0645\u0629: ',de:'Ich m\u00f6chte Informationen \u00fcber den Dienst: ',es:'Me gustar\u00eda informaci\u00f3n sobre el servicio: '};
+  callGemini((svcMsg[lang]||svcMsg.fr) + label);
+  _statContext(); /* ── tracking langue/heure/jour ── */
+  var inp = document.getElementById('chat-input');
+  if (inp) inp.blur();
+}
+
+function showTyping(){
+  const area = DOM.messages || document.getElementById('messages');
+  const row = document.createElement('div');
+  row.className = 'typing-row'; row.id = 'typing';
+  row.innerHTML = '<div class="typing-bbl"><div class="t-dot"></div><div class="t-dot"></div><div class="t-dot"></div></div>';
+  area.appendChild(row);
+  area.scrollTop = area.scrollHeight;
+}
+function hideTyping(){ var t = document.getElementById('typing'); if(t) t.remove(); }
+
+/* INPUT */
+DOM.input || document.getElementById('chat-input').addEventListener('input', function(){
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 80) + 'px';
+});
+DOM.input || document.getElementById('chat-input').addEventListener('keydown', function(e){
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); interceptSend(); }
+});
+
+
+/* ═══ ACCÈS ADMIN PAR MOT DE PASSE ═══
+   Le mot de passe lui-même n'est plus écrit en clair dans ce fichier :
+   seule son empreinte SHA-256 (ADMIN_PWD_HASH) y figure. Ce que
+   tu tapes dans le chat est haché dans le navigateur et comparé à cette
+   empreinte ; le mot de passe en clair n'est envoyé (en HTTPS) qu'au Worker
+   Cloudflare, qui seul le compare à sa variable secrète ADMIN_SECRET.
+   Limite à connaître : contrairement à une vérification 100% côté serveur,
+   une empreinte statique comme celle-ci peut théoriquement être cassée
+   hors-ligne par quelqu'un de déterminé qui récupère ce fichier — elle
+   empêche la lecture directe (view-source), pas une attaque ciblée. */
+const ADMIN_PWD_HASH = '24ae7394aed5884c50d2f342d1bc94cd59111ebc36ab3bbdcea0dad69489581c'; /* mot de passe : Libramont-Push6800 — à changer si besoin */
+async function _sha256Hex(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+}
+async function interceptSend() {
+  const input = document.getElementById('chat-input');
+  const val   = (input.value || '').trim();
+  const hash  = val ? await _sha256Hex(val) : '';
+  if (hash === ADMIN_PWD_HASH) {
+    input.value = ''; input.style.height = 'auto';
+    /* Si token encore valide → ouvrir directement */
+    if (_adminToken) { if (typeof adminOpen === 'function') adminOpen(); return; }
+    /* Sinon → s'authentifier avec le mot de passe saisi */
+    fetch(PUSH_WORKER_URL + '/auth', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: val })
+    }).then(function(r){ return r.json(); }).then(function(d){
+      if (d.token) {
+        _adminToken = d.token;
+        navigator.vibrate && navigator.vibrate([40,30,80]);
+        if (typeof adminOpen === 'function') adminOpen();
+      } else {
+        alert('Accès refusé. Vérifiez ADMIN_SECRET dans Cloudflare.');
+      }
+    }).catch(function(){ alert('Erreur de connexion au Worker.'); });
+    return;
+  }
+  if (typeof sendMsg === 'function') {
+    _statInc('questions');
+    _statContext();
+    sendMsg();
+    var inp = document.getElementById('chat-input');
+    if (inp) inp.blur();
+  }
+}
+
+/* ═══ HORAIRES ═══ */
+const HORAIRES = {
+  1:[[9,0,12,30]],2:[[9,0,12,30]],3:[[9,0,12,30]],
+  4:[[9,0,12,30],[13,30,17,0]],5:[[9,0,12,30]]
+};
+
+/* Jours fériés légaux belges — mis à jour chaque année si nécessaire */
+const JOURS_FERIES = [
+  '01-01', // Nouvel An
+  '04-06', // Lundi de Pâques 2026
+  '05-01', // Fête du Travail
+  '05-14', // Ascension 2026
+  '05-25', // Lundi de Pentecôte 2026
+  '07-21', // Fête Nationale
+  '08-15', // Assomption
+  '11-01', // Toussaint
+  '11-11', // Armistice
+  '12-25'  // Noël
+];
+
+function isFerie(date) {
+  const mm = String(date.getMonth()+1).padStart(2,'0');
+  const dd = String(date.getDate()).padStart(2,'0');
+  return JOURS_FERIES.includes(mm+'-'+dd);
+}
+const HORAIRES_MSG = {
+  ouvert:{fr:'Commune ouverte \u2014 ferme \u00e0 ',nl:'Gemeente open \u2014 sluit om ',en:'Municipality open \u2014 closes at ',de:'Gemeinde ge\u00f6ffnet \u2014 schlie\u00dft um ',es:'Municipio abierto \u2014 cierra a las ',ar:'\u0627\u0644\u0628\u0644\u062f\u064a\u0629 \u0645\u0641\u062a\u0648\u062d\u0629 \u2014 \u062a\u063a\u0644\u0642 \u0627\u0644\u0633\u0627\u0639\u0629 '},
+  bientot:{fr:'Fermeture dans moins de 30 min',nl:'Sluit binnen 30 minuten',en:'Closes in less than 30 min',de:'Schlie\u00dft in weniger als 30 Min.',es:'Cierra en menos de 30 min',ar:'\u062a\u063a\u0644\u0642 \u062e\u0644\u0627\u0644 \u0623\u0642\u0644 \u0645\u0646 30 \u062f\u0642\u064a\u0642\u0629'},
+  ferme:{fr:'Commune ferm\u00e9e \u2014 ',nl:'Gemeente gesloten \u2014 ',en:'Municipality closed \u2014 ',de:'Gemeinde geschlossen \u2014 ',es:'Municipio cerrado \u2014 ',ar:'\u0627\u0644\u0628\u0644\u062f\u064a\u0629 \u0645\u063a\u0644\u0642\u0629 \u2014 '},
+  demain:{fr:'Rouvert demain 9h00',nl:'Heropend morgen 9u00',en:'Reopens tomorrow 9:00 AM',de:'Morgen wieder ab 9:00 Uhr',es:'Reabre ma\u00f1ana a las 9:00',ar:'\u064a\u0639\u064a\u062f \u0627\u0644\u0641\u062a\u062d \u063a\u062f\u0627\u064b 9:00'},
+  lundi:{fr:'Rouvert lundi 9h00',nl:'Heropend maandag 9u00',en:'Reopens Monday 9:00 AM',de:'Montag wieder ab 9:00 Uhr',es:'Reabre el lunes a las 9:00',ar:'\u064a\u0639\u064a\u062f \u0627\u0644\u0641\u062a\u062d \u0627\u0644\u0627\u062b\u0646\u064a\u0646 9:00'},
+  aujourdhui:{fr:'Ouvre aujourd\'hui \u00e0 ',nl:'Opent vandaag om ',en:'Opens today at ',de:'\u00d6ffnet heute um ',es:'Abre hoy a las ',ar:'\u062a\u0641\u062a\u062d \u0627\u0644\u064a\u0648\u0645 \u0627\u0644\u0633\u0627\u0639\u0629 '},
+  ferie:{fr:'Jour f\u00e9ri\u00e9 \u2014 Rouvert demain 9h00',nl:'Feestdag \u2014 Morgen terug open 9u00',en:'Public holiday \u2014 Reopens tomorrow 9:00 AM',de:'Feiertag \u2014 Morgen wieder ab 9:00 Uhr',es:'Festivo \u2014 Reabre ma\u00f1ana a las 9:00',ar:'\u0639\u0637\u0644\u0629 \u0631\u0633\u0645\u064a\u0629 \u2014 \u064a\u0641\u062a\u062d \u063a\u062f\u0627\u064b 9:00'}
+};
+
+function updateHoraires() {
+  const now = new Date(), jour = now.getDay(), h = now.getHours(), m = now.getMinutes(), totalMin = h*60+m;
+  const banner = DOM.horBanner || document.getElementById('horaires-banner'), txt = DOM.horText || document.getElementById('horaires-text');
+  const l = lang;
+  /* ── Jour férié → fermé toute la journée ── */
+  if (isFerie(now)) {
+    banner.className = 'horaires-banner ferme';
+    txt.textContent = HORAIRES_MSG.ferie[l] || HORAIRES_MSG.ferie.fr;
+    return;
+  }
+  const plages = HORAIRES[jour] || [];
+  for (var i=0;i<plages.length;i++) {
+    var p=plages[i], debut=p[0]*60+p[1], fin=p[2]*60+p[3];
+    if (totalMin >= debut && totalMin < fin) {
+      var restant = fin - totalMin, statut = restant <= 30 ? 'bientot' : 'ouvert';
+      banner.className = 'horaires-banner ' + statut;
+      txt.textContent = statut==='ouvert' ? (HORAIRES_MSG.ouvert[l]||HORAIRES_MSG.ouvert.fr)+p[2]+'h'+(p[3]===0?'00':p[3]) : (HORAIRES_MSG.bientot[l]||HORAIRES_MSG.bientot.fr);
+      return;
+    }
+  }
+  var prochainAujourdHui = null;
+  for (var j=0;j<plages.length;j++){var pj=plages[j];if(pj[0]*60+pj[1]>totalMin){prochainAujourdHui=pj;break;}}
+  if (prochainAujourdHui) {
+    var ouvreDans = prochainAujourdHui[0]*60+prochainAujourdHui[1]-totalMin;
+    banner.className = 'horaires-banner '+(ouvreDans<=30?'bientot':'ferme');
+    txt.textContent = (HORAIRES_MSG.aujourdhui[l]||HORAIRES_MSG.aujourdhui.fr)+prochainAujourdHui[0]+'h'+(prochainAujourdHui[1]===0?'00':String(prochainAujourdHui[1]).padStart(2,'0'));
+    return;
+  }
+  banner.className = 'horaires-banner ferme';
+  txt.textContent = (HORAIRES_MSG.ferme[l]||HORAIRES_MSG.ferme.fr) + ((jour>=1&&jour<=4)?(HORAIRES_MSG.demain[l]||HORAIRES_MSG.demain.fr):(HORAIRES_MSG.lundi[l]||HORAIRES_MSG.lundi.fr));
+}
+
+/* ═══ STATUS ═══ */
+const STATUS_MSG = {
+  online:{fr:'En ligne',nl:'Online',en:'Online',de:'Online',es:'En l\u00ednea',ar:'\u0645\u062a\u0635\u0644'},
+  quota:{fr:'Quota atteint',nl:'Quotum bereikt',en:'Quota reached',de:'Kontingent erreicht',es:'Cuota alcanzada',ar:'\u062a\u0645 \u0627\u0644\u0648\u0635\u0648\u0644 \u0644\u0644\u062d\u062f'},
+  offline:{fr:'Hors ligne',nl:'Offline',en:'Offline',de:'Offline',es:'Sin conexi\u00f3n',ar:'\u063a\u064a\u0631 \u0645\u062a\u0635\u0644'}
+};
+function setStatus(type) {
+  const badge = DOM.statusBadge || document.querySelector('.status-badge');
+  const label = DOM.statusLabel || document.getElementById('status-label');
+  badge.className = 'status-badge ' + (type !== 'online' ? type : '');
+  label.textContent = (STATUS_MSG[type]||STATUS_MSG.online)[lang] || type;
+}
+
+/* ═══ FEEDBACK ═══ */
+const FB_MSG = {
+  merci:{fr:'Merci !',nl:'Dank u!',en:'Thank you!',de:'Danke!',es:'\u00a1Gracias!',ar:'\u0634\u0643\u0631\u0627\u064b!'},
+  dommage:{fr:'Merci, nous allons am\u00e9liorer \u00e7a.',nl:'Bedankt, we verbeteren dit.',en:'Thanks, we will improve.',de:'Danke, wir verbessern das.',es:'Gracias, lo mejoraremos.',ar:'\u0634\u0643\u0631\u0627\u064b\u060c \u0633\u0646\u062d\u0633\u0646 \u0630\u0644\u0643.'}
+};
+function addFeedback(msgEl, rawText) {
+  const wrap = document.createElement('div');
+  wrap.className = 'feedback-wrap';
+  // Boutons like/dislike
+  const likeBtn  = document.createElement('button');
+  likeBtn.className  = 'fb-btn';
+  likeBtn.setAttribute('aria-label', 'Utile');
+  likeBtn.textContent = '\ud83d\udc4d';
+  likeBtn.onclick = function(){ doFeedback(likeBtn, true); };
+  const dislikeBtn = document.createElement('button');
+  dislikeBtn.className  = 'fb-btn';
+  dislikeBtn.setAttribute('aria-label', 'Pas utile');
+  dislikeBtn.textContent = '\ud83d\udc4e';
+  dislikeBtn.onclick = function(){ doFeedback(dislikeBtn, false); };
+  // Bouton audio — poussé à droite
+  const speakBtn = document.createElement('button');
+  speakBtn.className = 'fb-btn fb-speak';
+  speakBtn.setAttribute('aria-label', 'Écouter');
+  speakBtn.title = 'Écouter la réponse';
+  speakBtn.innerHTML = '<svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:currentColor;vertical-align:middle"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02z"/></svg>';
+  speakBtn.onclick = function(){
+    _loadVoice(function() {
+      if (typeof speakText === 'function') {
+        speakBtn.classList.add('playing');
+        speakText(rawText || '', function(){ speakBtn.classList.remove('playing'); });
+      }
+    });
+  };
+  wrap.appendChild(likeBtn);
+  wrap.appendChild(dislikeBtn);
+  wrap.appendChild(speakBtn);
+  msgEl.appendChild(wrap);
+}
+function doFeedback(btn, isLike) {
+  const wrap = btn.parentElement, l = lang;
+  if (isLike) { btn.className='fb-btn liked'; wrap.innerHTML='<span class="fb-done">'+(FB_MSG.merci[l]||'Merci !')+' \ud83d\udc4d</span>'; }
+  else { btn.className='fb-btn disliked'; wrap.innerHTML='<span class="fb-done">'+(FB_MSG.dommage[l]||'Merci.')+'</span>'; }
+  /* Envoi du vote au Worker \u2014 alimente "Satisfaction" dans le Command Center */
+  fetch(PUSH_WORKER_URL + '/feedback', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      helpful:  isLike,
+      question: window._lastUserQuestion || '',
+      svcId:    (typeof getSelectedSvc === 'function' ? getSelectedSvc() : (window.selectedSvc || null)),
+      lang:     l
+    })
+  }).catch(function(){});
+}
+
+/* ═══ ALERTE ═══ */
+const ALERT_ITEMS = [
+  /* ── Appels directs (tel:) ── */
+  {id:'_call112', icon:'🆘', tel:'+32112', fr:'Urgences — 112',            nl:'Hulpdiensten — 112',          en:'Emergency — 112',           de:'Notfall — 112',              es:'Emergencias — 112',          ar:'الطوارئ — 112',          badge:'112', badgeColor:'#eb5757'},
+  {id:'_call101', icon:'👮', tel:'+32101', fr:'Police — 101',               nl:'Politie — 101',               en:'Police — 101',              de:'Polizei — 101',              es:'Policía — 101',              ar:'الشرطة — 101',           badge:'101', badgeColor:'#2d9cdb'},
+  {id:'_callpoi', icon:'☠️', tel:'+3270245245', fr:'Centre antipoison — 070 245 245', nl:'Antigifcentrum — 070 245 245', en:'Poison centre — 070 245 245', de:'Giftnotruf — 070 245 245', es:'Centro antivenenos — 070 245 245', ar:'مركز مكافحة السموم — 070 245 245', badge:'070 245 245', badgeColor:'#6d3aab'},
+  /* ── Signalements (formulaire) ── */
+  {id:'incendie',  icon:'🔥', fr:'Incendie / explosion',          nl:'Brand / explosie',                  en:'Fire / explosion',             de:'Brand / Explosion',                   es:'Incendio / explosión',             ar:'حريق / انفجار',          vital:'112'},
+  {id:'accident',  icon:'🚗', fr:'Accident de la route',           nl:'Verkeersongeval',                   en:'Road accident',                de:'Verkehrsunfall',                      es:'Accidente de tráfico',             ar:'حادث مروري',             vital:'112'},
+  {id:'medical',   icon:'🏥', fr:'Problème médical urgent',        nl:'Medisch probleem',                  en:'Medical emergency',            de:'Medizinischer Notfall',               es:'Problema médico urgente',          ar:'مشكلة طبية عاجلة',       vital:'112'},
+  {id:'gaz',       icon:'⛽', fr:'Fuite de gaz',                   nl:'Gaslek',                            en:'Gas leak',                     de:'Gasleck',                             es:'Fuga de gas',                      ar:'تسرب غاز',               vital:'112'},
+  {id:'elec',      icon:'⚡', fr:'Panne / coupure d\'électricité',  nl:'Stroomstoring',                     en:'Power outage',                 de:'Stromausfall',                        es:'Corte de electricidad',            ar:'انقطاع الكهرباء',        vital:null, tel:'+3278787800', badge:'ORES 078/78.78.00', badgeColor:'#e67e22'},
+  {id:'eau',       icon:'🚿', fr:'Coupure d\'eau',                  nl:'Wateronderbreking',                 en:'Water outage',                 de:'Wasserunterbrechung',                 es:'Corte de agua',                    ar:'انقطاع المياه',          vital:null, tel:'+3287878787', badge:'SWDE 087/87.87.87', badgeColor:'#2980b9'},
+  {id:'batiment',  icon:'🏗️', fr:'Bâtiment dangereux',            nl:'Gevaarlijk gebouw',                 en:'Dangerous building',           de:'Gefährliches Gebäude',                es:'Edificio peligroso',               ar:'مبنى خطير',              vital:'112'},
+  {id:'arbre',     icon:'🌳', fr:'Arbre tombé sur voie publique',  nl:'Boom gevallen op openbare weg',     en:'Tree fallen on public road',   de:'Baum auf öffentlicher Straße',        es:'Árbol caído en vía pública',       ar:'شجرة سقطت على الطريق',   vital:null},
+  {id:'inond',     icon:'💧', fr:'Inondation / égout débordant',   nl:'Overstroming / riool overloopend',  en:'Flooding / overflowing drain', de:'Überschwemmung / überlaufender Kanal',es:'Inundación / alcantarilla desbordada', ar:'فيضان / بالوعة متدفقة', vital:null},
+  {id:'animal',    icon:'🐾', fr:'Animal mort ou errant',          nl:'Dood of zwervend dier',             en:'Dead or stray animal',         de:'Totes oder streundes Tier',           es:'Animal muerto o errante',          ar:'حيوان ميت أو ضال',       vital:null},
+  {id:'depot',     icon:'🗑️', fr:"Dépôt sauvage d'immondices",   nl:'Sluikstort',                        en:'Illegal waste dumping',        de:'Illegale Müllentsorgung',             es:'Vertido ilegal de residuos',       ar:'رمي غير قانوني للنفايات',vital:null},
+  {id:'eclairage', icon:'💡', fr:'Éclairage public dangereux',     nl:'Gevaarlijke openbare verlichting',  en:'Dangerous public lighting',    de:'Gefährliche Straßenbeleuchtung',      es:'Iluminación pública peligrosa',    ar:'إضاءة عامة خطيرة',       vital:null},
+  {id:'poison',    icon:'☠️', fr:'Intoxication / empoisonnement',  nl:'Vergiftiging / intoxicatie',        en:'Poisoning / intoxication',     de:'Vergiftung / Intoxikation',           es:'Intoxicación / envenenamiento',    ar:'تسمم',                   vital:'070 245 245'},
+  {id:'autre',     icon:'💬', fr:'Autre problème urgent',          nl:'Ander dringend probleem',           en:'Other urgent issue',           de:'Anderes dringendes Problem',          es:'Otro problema urgente',            ar:'مشكلة عاجلة أخرى',       vital:null},
+];
+
+const ALERT_UI = {
+  titre:   {fr:'Urgences & Signalements',        nl:'Noodgevallen & Meldingen',        en:'Emergencies & Reports',          de:'Notfälle & Meldungen',            es:'Urgencias & Reportes',           ar:'الطوارئ والبلاغات'},
+  appels:  {fr:'Appels directs',                 nl:'Directe oproepen',                en:'Direct calls',                   de:'Direktanrufe',                    es:'Llamadas directas',              ar:'اتصالات مباشرة'},
+  signaler:{fr:'Signaler un problème',           nl:'Probleem melden',                 en:'Report an issue',                de:'Problem melden',                  es:'Reportar un problema',           ar:'الإبلاغ عن مشكلة'},
+  vital112:{fr:'→ Appelez le 112 en premier',   nl:'→ Bel eerst 112',                 en:'→ Call 112 first',               de:'→ Zuerst 112 anrufen',            es:'→ Llame primero al 112',         ar:'→ اتصل بـ 112 أولاً'},
+  vital101:{fr:'→ Appelez le 101 (police)',      nl:'→ Bel 101 (politie)',             en:'→ Call 101 (police)',             de:'→ 101 anrufen (Polizei)',         es:'→ Llame al 101 (policía)',       ar:'→ اتصل بـ 101 (الشرطة)'},
+  vitalpoi:{fr:'→ Appelez le 070 245 245',       nl:'→ Bel 070 245 245',              en:'→ Call 070 245 245',             de:'→ 070 245 245 anrufen',           es:'→ Llame al 070 245 245',        ar:'→ اتصل بـ 070 245 245'},
+  annuler: {fr:'Annuler',                        nl:'Annuleren',                       en:'Cancel',                         de:'Abbrechen',                       es:'Cancelar',                       ar:'إلغاء'},
+  retour:  {fr:'← Retour',                       nl:'← Terug',                         en:'← Back',                        de:'← Zurück',                        es:'← Volver',                       ar:'← رجوع'},
+  envoyer: {fr:'Envoyer le signalement',         nl:'Melding versturen',               en:'Send report',                   de:'Meldung senden',                  es:'Enviar reporte',                 ar:'إرسال البلاغ'},
+  f_nom:   {fr:'Nom (facultatif)',               nl:'Naam (facultatief)',              en:'Name (optional)',                de:'Name (optional)',                  es:'Nombre (opcional)',              ar:'الاسم (اختياري)'},
+  f_tel:   {fr:'Téléphone de rappel (facultatif)', nl:'Terugbelnummer (facultatief)',    en:'Callback phone (optional)',      de:'Rückrufnummer (optional)',         es:'Teléfono de contacto (opcional)', ar:'رقم الهاتف للمراجعة (اختياري)'},
+  f_lieu:  {fr:'Adresse précise du sinistre / problème',  nl:'Exact adres van het incident',    en:'Exact address of the incident',  de:'Genaue Adresse des Vorfalls',     es:'Dirección exacta del incidente', ar:'العنوان الدقيق للحادث'},
+  f_pers:  {fr:'Nombre de personnes impliquées',  nl:'Aantal betrokken personen',       en:'Number of persons involved',     de:'Anzahl betroffener Personen',      es:'Número de personas afectadas',   ar:'عدد الأشخاص المعنيين'},
+  f_det:   {fr:'Détails supplémentaires',        nl:'Aanvullende details',             en:'Additional details',             de:'Weitere Details',                 es:'Detalles adicionales',           ar:'تفاصيل إضافية'},
+  corps:   {fr:'Signalement via assistant communal — Ville de Libramont-Chevigny', nl:'Melding via gemeentelijke assistent — Stad Libramont-Chevigny', en:'Report via municipal assistant — City of Libramont-Chevigny', de:'Meldung über Gemeindeassistent — Stadt Libramont-Chevigny', es:'Reporte via asistente municipal — Ciudad de Libramont-Chevigny', ar:'بلاغ عبر المساعد البلدي — مدينة ليبرامون-شوفينيي'},
+};
+
+let _alertSelectedId = null;
+
+function envoyerAlerte() {
+  _alertSelectedId = null;
+  _alertShowStep1();
+  (DOM.alertOverlay || document.getElementById('alert-overlay')).classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function _alertShowStep1() {
+  const l   = lang;
+  const dlg = DOM.alertDialog || document.getElementById('alert-dialog');
+  const inp = function(lbl, cls){ return '<span style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#fff;background:'+cls+';margin-left:auto;flex-shrink:0">'+lbl+'</span>'; };
+
+  let html = '<h3 style="font-family:Sora,sans-serif;font-size:15px;color:var(--ink);margin-bottom:12px">🚨 '+(ALERT_UI.titre[l]||ALERT_UI.titre.fr)+'</h3>';
+
+  /* ── Appels directs ── */
+  html += '<p style="font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">'+(ALERT_UI.appels[l]||ALERT_UI.appels.fr)+'</p>';
+  html += '<div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px">';
+  ALERT_ITEMS.filter(function(i){return i.tel;}).forEach(function(item){
+    var label = item[l] || item.fr;
+    html += '<a href="tel:'+item.tel+'" onclick="fermerModal()" class="alert-item-btn" style="text-decoration:none;justify-content:space-between">'
+          + '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">'+item.icon+'</span><span>'+label+'</span></span>'
+          + inp(item.badge, item.badgeColor)
+          + '</a>';
+  });
+  html += '</div>';
+
+  /* ── Séparateur ── */
+  html += '<div style="border-top:1px solid var(--gray-bd);margin-bottom:10px"></div>';
+  html += '<p style="font-size:10px;font-weight:700;color:var(--gray-mid);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px">'+(ALERT_UI.signaler[l]||ALERT_UI.signaler.fr)+'</p>';
+
+  /* ── Items signalement ── */
+  html += '<div style="display:flex;flex-direction:column;gap:5px">';
+  ALERT_ITEMS.filter(function(i){return !i.tel;}).forEach(function(item){
+    var label = item[l] || item.fr;
+    html += '<button class="alert-item-btn" onclick="_alertPickType(&quot;'+item.id+'&quot;)" style="justify-content:space-between">'
+          + '<span style="display:flex;align-items:center;gap:8px"><span style="font-size:17px">'+item.icon+'</span><span>'+label+'</span></span>';
+    if (item.vital) html += inp(item.vital, item.vital==='112'?'#eb5757':item.vital==='101'?'#2d9cdb':'#6d3aab');
+    html += '</button>';
+  });
+  html += '</div>';
+  html += '<button class="alert-cancel-btn" onclick="fermerModal()">'+(ALERT_UI.annuler[l]||'Annuler')+'</button>';
+  dlg.innerHTML = html;
+}
+
+function _alertPickType(itemId) {
+  _alertSelectedId = itemId;
+  const l    = lang;
+  const item = ALERT_ITEMS.find(function(i){ return i.id === itemId; });
+  const dlg  = DOM.alertDialog || document.getElementById('alert-dialog');
+  const label = item ? (item[l] || item.fr) : itemId;
+  const icon  = item ? item.icon : '📢';
+
+  /* Bannière numéro d'urgence si applicable */
+  let bannerHtml = '';
+  if (item && item.vital) {
+    var vitalKey = item.vital === '112' ? 'vital112' : item.vital === '101' ? 'vital101' : 'vitalpoi';
+    var vitalTel = item.vital === '112' ? '+32112' : item.vital === '101' ? '+32101' : '+3270245245';
+    var vitalColor = item.vital === '112' ? '#eb5757' : item.vital === '101' ? '#2d9cdb' : '#6d3aab';
+    bannerHtml = '<a href="tel:'+vitalTel+'" style="display:flex;align-items:center;gap:8px;background:'+vitalColor+'18;border:1.5px solid '+vitalColor+'44;border-radius:10px;padding:8px 12px;margin-bottom:12px;text-decoration:none;color:'+vitalColor+';font-size:13px;font-weight:600">'
+      + '<span style="font-size:18px">📞</span><span>'+(ALERT_UI[vitalKey][l]||ALERT_UI[vitalKey].fr)+'</span>'
+      + '</a>';
+  }
+
+  let html = '<h3 style="font-family:Sora,sans-serif;font-size:15px;color:var(--ink);margin-bottom:10px">🚨 '+icon+' '+label+'</h3>';
+  html += bannerHtml;
+
+  /* ── Champs formulaire ── */
+  const fld = function(id, labelKey, type, rows, ph){
+    var lbl = (ALERT_UI[labelKey][l]||ALERT_UI[labelKey].fr);
+    var s   = "width:100%;border:1.5px solid var(--gray-bd);border-radius:8px;padding:8px 10px;font-size:14px;font-family:'DM Sans',sans-serif;color:var(--ink);background:#fff;outline:none;box-sizing:border-box";
+    var el  = type==='textarea'
+      ? '<textarea id="'+id+'" rows="'+rows+'" placeholder="'+ph+'" style="'+s+';resize:vertical"></textarea>'
+      : '<input id="'+id+'" type="'+type+'" autocomplete="'+(id==='alert-tel'?'tel':id==='alert-nom'?'name':'off')+'" placeholder="'+ph+'" style="'+s+'">';
+    return '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--gray-mid);margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px">'+lbl+'</label>'+el+'</div>';
+  };
+
+  html += '<div style="background:var(--blue-pale);border:1px solid var(--gray-bd);border-radius:10px;padding:12px;margin-bottom:12px;display:flex;flex-direction:column;gap:9px">';
+  html += fld('alert-nom', 'f_nom', 'text',   1, '…');
+  html += fld('alert-tel', 'f_tel', 'tel',    1, '+32 …');
+  html += fld('alert-lieu','f_lieu','text',   1, '…');
+  html += fld('alert-pers','f_pers','text',   1, '…');
+  html += fld('alert-det', 'f_det', 'textarea',3,'…');
+  html += '</div>';
+
+  const rgpd = {
+    fr: '🔒 Ces informations sont transmises uniquement à la Ville de Libramont-Chevigny pour traiter votre signalement. Elles ne sont pas conservées par l\'application (RGPD).',
+    nl: '🔒 Deze gegevens worden uitsluitend doorgestuurd naar de Stad Libramont-Chevigny om uw melding te verwerken. Ze worden niet bewaard door de applicatie (AVG).',
+    en: '🔒 This information is sent only to the city of Libramont-Chevigny to process your report. It is not stored by the application (GDPR).',
+    de: '🔒 Diese Daten werden ausschließlich an die Stadt Libramont-Chevigny weitergeleitet. Sie werden von der Anwendung nicht gespeichert (DSGVO).',
+    es: '🔒 Esta información se transmite únicamente a la ciudad de Libramont-Chevigny. No es conservada por la aplicación (RGPD).',
+    ar: '🔒 تُرسَل هذه المعلومات فقط إلى مدينة ليبرامون-شوفينيي لمعالجة بلاغك. لا يتم حفظها من قِبَل التطبيق.'
+  };
+  html += '<p style="font-size:10px;color:var(--gray-mid);line-height:1.5;margin-bottom:10px;padding:8px 10px;background:rgba(0,0,0,.03);border-radius:8px;border:1px solid var(--gray-bd)">'+(rgpd[l]||rgpd.fr)+'</p>';
+
+  html += '<div style="display:flex;gap:8px">'
+        + '<button class="alert-cancel-btn" style="flex:0 0 auto;margin-top:0;width:auto;padding:10px 16px" onclick="_alertShowStep1()">'+(ALERT_UI.retour[l]||'← Retour')+'</button>'
+        + '<button onclick="_alertEnvoyer()" style="flex:1;padding:10px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-family:\'DM Sans\',sans-serif;font-size:13px;font-weight:600;cursor:pointer">'+(ALERT_UI.envoyer[l]||'Envoyer')+'</button>'
+        + '</div>';
+
+  dlg.innerHTML = html;
+  setTimeout(function(){ var el=document.getElementById('alert-nom'); if(el) el.focus(); }, 100);
+}
+
+function _alertEnvoyer() {
+  const l    = lang;
+  const item = ALERT_ITEMS.find(function(i){ return i.id === _alertSelectedId; });
+  if (!item) return;
+  const label = item[l] || item.fr;
+  const icon  = item.icon;
+  const nom   = (document.getElementById('alert-nom')  ||{}).value||'';
+  const tel   = (document.getElementById('alert-tel')  ||{}).value||'';
+  const lieu  = (document.getElementById('alert-lieu') ||{}).value||'';
+  const pers  = (document.getElementById('alert-pers') ||{}).value||'';
+  const det   = (document.getElementById('alert-det')  ||{}).value||'';
+
+  const sujet = '🚨 Signalement — '+icon+' '+label+' — Assistant communal';
+  let corps   = (ALERT_UI.corps[l]||ALERT_UI.corps.fr)+'\n';
+  corps += '----------------------------\n';
+  corps += 'Type      : '+icon+' '+label+'\n';
+  if (nom.trim())  corps += 'Nom       : '+nom.trim()+'\n';
+  if (tel.trim())  corps += 'Tél       : '+tel.trim()+'\n';
+  if (lieu.trim()) corps += 'Lieu      : '+lieu.trim()+'\n';
+  if (pers.trim()) corps += 'Personnes : '+pers.trim()+'\n';
+  if (det.trim())  corps += '\nDétails   :\n'+det.trim()+'\n';
+  corps += '----------------------------\n';
+  corps += '⏱ '+new Date().toLocaleString(l==='ar'?'ar-SA':l+'-BE');
+
+  fermerModal();
+  _statInc('signalements');
+  fetch(PUSH_WORKER_URL + '/signalement', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      village:   lieu.trim() || 'inconnu',
+      categorie: label || 'général'
+    })
+  }).catch(function(){});
+  location.href = 'mailto:info@libramont.be?subject='+encodeURIComponent(sujet)+'&body='+encodeURIComponent(corps);
+}
+
+function fermerModal(){ (DOM.alertOverlay || document.getElementById('alert-overlay')).classList.remove('open'); document.body.style.overflow=''; }
+
+/* ═══ INIT ═══ */
+let horairesInterval = null;
+document.addEventListener('visibilitychange', function(){
+  if(document.hidden){ clearInterval(horairesInterval); }
+  else{ updateHoraires(); horairesInterval=setInterval(updateHoraires,60000); }
+});
+
+window.addEventListener('load', function(){
+  /* Init image orbe vocale */
+  var orbImg = document.getElementById('voice-orb-img');
+  if (orbImg && typeof BLASON !== 'undefined') orbImg.src = BLASON;
+  if (typeof checkStatusOnLoad === 'function') checkStatusOnLoad();
+  setTimeout(function(){ isInitializing=false; var msgs=DOM.messages || document.getElementById('messages'); if(msgs) msgs.scrollTop=0; }, 2500);
+  /* Attendre que module6 (resetChat) soit prêt avant d'initialiser */
+  function _initLang() {
+    if (typeof resetChat === 'function') {
+      setLang(lang);
+    } else {
+      setTimeout(_initLang, 50);
+    }
+  }
+  _initLang();
+  horairesInterval = setInterval(updateHoraires, 60000);
+
+  /* ── Mécanisme de secours : forcer l'affichage si rien n'apparaît ── */
+  setTimeout(function() {
+    var msgs = document.getElementById('messages');
+    if (!msgs) return;
+    var hasMsgRow = msgs.querySelectorAll('.msg-row').length > 0;
+    if (!hasMsgRow) {
+      /* Aucun message — forcer l'affichage */
+      var s = S[lang] || S.fr;
+      msgs.innerHTML = '<div class="ts" id="ts-label">' + s.ts + '</div>';
+      if (typeof window.addMsg === 'function') {
+        window.addMsg('bot', s.welcome);
+      }
+      setTimeout(function() {
+        if (typeof showSvcSelector === 'function') showSvcSelector();
+      }, 500);
+    }
+  }, 1200);
+  /* Vérification statut quota au démarrage */
+  setTimeout(function(){
+    if(typeof window.exhaustedUntil !== 'undefined' && Date.now() < window.exhaustedUntil){
+      setStatus('quota');
+    }
+  }, 300);
+});
+
+</script>
+
+<!-- PWA — bannière installation -->
+<div id="pwa-banner">
+  <img src="/LibramontBot/icon-192.png" alt="Assistant Libramont-Chevigny">
+  <div id="pwa-banner-text">
+    <strong>Installer l'application</strong>
+    Accès rapide + alertes de la commune
+  </div>
+  <button class="pwa-btn pwa-install" onclick="pwaInstall()">Installer</button>
+  <button class="pwa-btn pwa-dismiss" onclick="pwaDismiss()">✕</button>
+</div>
+
+<!-- Panneau admin envoi notification -->
+<div id="admin-panel">
+  <div class="admin-inner">
+    <div class="admin-glow"></div>
+    <div class="admin-badge">
+      <div class="admin-badge-icon">📣</div>
+      <div class="admin-badge-info">
+        <h4>Command Center</h4>
+        <p>Ville de Libramont-Chevigny</p>
+      </div>
+    </div>
+
+    <!-- Onglets -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="adminSwitchTab('notif')">📡 Diffusion</button>
+      <button class="admin-tab" onclick="adminSwitchTab('stats')">📊 Statistiques</button>
+    </div>
+
+    <!-- Onglet Diffusion -->
+    <div id="admin-pane-notif" class="admin-pane active">
+      <div id="admin-stats">Chargement…</div>
+      <div class="admin-field-label">Type d'alerte</div>
+      <div id="admin-push-grid"></div>
+      <div id="admin-compose" style="display:none">
+        <input type="hidden" id="admin-notif-theme" value="info">
+        <div class="admin-field-label" style="margin-top:12px">Titre</div>
+        <input type="text" id="admin-notif-title" placeholder="Ex: Coupure d'eau" value="Ville de Libramont-Chevigny">
+        <div class="admin-field-label">Message</div>
+        <textarea id="admin-notif-body" placeholder="Rédigez votre message…"></textarea>
+      </div>
+      <div class="admin-row" style="margin-top:14px">
+        <button class="admin-close" onclick="document.getElementById('admin-panel').classList.remove('open')">✕ Fermer</button>
+        <button class="admin-send" id="admin-send-btn" onclick="adminSendNotif()">📡 Diffuser</button>
+      </div>
+    </div>
+
+    <!-- Onglet Statistiques -->
+    <div id="admin-pane-stats" class="admin-pane">
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon">💬</div>
+          <div class="stat-card-value" id="stat-questions">—</div>
+          <div class="stat-card-label">Questions posées</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">🔔</div>
+          <div class="stat-card-value" id="stat-notifs">—</div>
+          <div class="stat-card-label">Notifications push</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">👥</div>
+          <div class="stat-card-value" id="stat-subscribers">—</div>
+          <div class="stat-card-label">Abonnés alertes</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">📲</div>
+          <div class="stat-card-value" id="stat-installs">—</div>
+          <div class="stat-card-label">Installations app</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">🚨</div>
+          <div class="stat-card-value" id="stat-signalements">—</div>
+          <div class="stat-card-label">Signalements</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">❓</div>
+          <div class="stat-card-value" id="stat-noanswer">—</div>
+          <div class="stat-card-label">Sans réponse</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon">📅</div>
+          <div class="stat-card-value" id="stat-since">—</div>
+          <div class="stat-card-label">Depuis</div>
+        </div>
+      </div>
+
+      <!-- Activité 30 jours -->
+      <div class="stat-section">
+        <div class="stat-section-title">📈 Activité — 30 derniers jours</div>
+        <div class="stat-day-grid" id="stat-days-grid"></div>
+        <div class="stat-day-labels" id="stat-days-labels"></div>
+      </div>
+
+      <!-- Jours de la semaine -->
+      <div class="stat-section">
+        <div class="stat-section-title">📅 Jours les plus actifs</div>
+        <div id="stat-weekdays-list"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <!-- Heures de pointe -->
+      <div class="stat-section">
+        <div class="stat-section-title">🕐 Heures les plus actives</div>
+        <div id="stat-hours-list"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <!-- Sujets les plus demandés -->
+      <div class="stat-topics">
+        <div class="stat-topics-title">🔥 Sujets les plus demandés</div>
+        <div id="stat-topics-list"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:8px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <!-- Satisfaction (like/dislike) -->
+      <div class="stat-section">
+        <div class="stat-section-title">😊 Satisfaction des réponses</div>
+        <div id="stat-satisfaction"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <!-- Questions avec avis négatif -->
+      <div class="stat-section">
+        <div class="stat-section-title">🙁 Questions avec avis négatif</div>
+        <div id="stat-disliked-list"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <!-- Questions sans réponse -->
+      <div class="stat-section">
+        <div class="stat-section-title">❓ Questions sans réponse — trous du KV</div>
+        <div id="stat-noanswer-list"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <!-- Langues -->
+      <div class="stat-section">
+        <div class="stat-section-title">🌍 Langues utilisées</div>
+        <div id="stat-langs-list"><div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div></div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+        <button class="stats-refresh" style="flex:1" onclick="adminRefresh(this)">↻ Actualiser</button>
+        <span id="stat-updated" style="font-size:10px;color:rgba(255,255,255,.25)"></span>
+      </div>
+      <div class="admin-row" style="margin-top:10px">
+        <button class="admin-close" onclick="document.getElementById('admin-panel').classList.remove('open')">✕ Fermer</button>
+      </div>
+    </div>
+
+
+  </div>
+</div>
+<button id="admin-fab" title="Panneau admin" onclick="document.getElementById('admin-panel').classList.toggle('open')">📣</button>
+
+<!-- PWA + Push JS -->
+<script>
+
+/* ⚠️ TODO : remplacer par l'URL réelle une fois le Worker Cloudflare de Libramont-Chevigny créé */
+/* ⚠️ TODO : remplacer par l'URL réelle une fois le Worker Cloudflare de Libramont-Chevigny créé */
+const PUSH_WORKER_URL = 'https://REMPLACER-libramont.lepoint2023.workers.dev'; /* ⚠️ placeholder — remplacer par l'URL réelle une fois le Worker Cloudflare de Libramont-Chevigny créé */
+/* Mot de passe admin absent du code — validé par le Worker Cloudflare */
+let _adminToken = null; /* token 1h retourné par /auth */
+
+let _swReg      = null;
+let _deferred   = null;
+
+/* ── Service Worker ── */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/LibramontBot/sw.js').then(function(reg) {
+    _swReg = reg;
+    setTimeout(requestPush, 4000);
+  }).catch(function(e){ console.warn('[PWA]', e); });
+}
+
+/* ── Bannière installation ── */
+window.addEventListener('beforeinstallprompt', function(e) {
+  e.preventDefault();
+  _deferred = e;
+  if (!window.matchMedia('(display-mode: standalone)').matches &&
+      !sessionStorage.getItem('pwa-dismissed')) {
+    document.getElementById('pwa-banner').classList.add('show');
+  }
+});
+
+function pwaInstall() {
+  document.getElementById('pwa-banner').classList.remove('show');
+  if (_deferred) {
+    _deferred.prompt();
+    _deferred.userChoice.then(function(){ _deferred = null; });
+  }
+}
+function pwaDismiss() {
+  document.getElementById('pwa-banner').classList.remove('show');
+  sessionStorage.setItem('pwa-dismissed', '1');
+}
+
+/* Compteur installations — déclenché à la vraie confirmation */
+window.addEventListener('appinstalled', function() {
+  fetch(PUSH_WORKER_URL + '/stat-context', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ install: true })
+  }).catch(function(){});
+});
+
+/* ── Abonnement notifications ── */
+function urlB64ToUint8(b64) {
+  const p = '='.repeat((4 - b64.length % 4) % 4);
+  const s = atob((b64 + p).replace(/-/g,'+').replace(/_/g,'/'));
+  const o = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) o[i] = s.charCodeAt(i);
+  return o;
+}
+
+async function requestPush() {
+  if (!('PushManager' in window) || !_swReg) return;
+  if (sessionStorage.getItem('push-declined')) return;
+  try {
+    const res = await fetch(PUSH_WORKER_URL + '/vapid-public-key');
+    if (!res.ok) return;
+    const { publicKey } = await res.json();
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { sessionStorage.setItem('push-declined','1'); return; }
+    const sub = await _swReg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlB64ToUint8(publicKey)
+    });
+    await fetch(PUSH_WORKER_URL + '/subscribe', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(sub.toJSON())
+    });
+  } catch(e) { console.warn('[Push]', e); }
+}
+
+/* ── Admin — activation par 5 clics sur le footer ── */
+/* ── Étoiles animées du fond de l'easter egg : scintillement plus marqué +
+   apparition/disparition en fondu doux (pas un simple saut de position),
+   dosé pour rester discret et ne pas donner un effet trop chargé ── */
+let _eeStarList   = [];
+let _eeStarAnimId = null;
+let _eeShooting   = [];
+/* Probabilité de créer une étoile filante à chaque frame (~60fps) — dosée
+   pour donner environ 5 à 6 étoiles filantes sur les 60s du générique */
+const _EE_SHOOTING_SPAWN_PROB = 0.00106; /* générique ralenti à 85s (était 60s) : probabilité réduite pour garder ~5-6 étoiles filantes par vision complète */
+function _eeSpawnShootingStar(canvas) {
+  const dir   = Math.random() < 0.5 ? 1 : -1; /* tombe vers la droite ou la gauche */
+  const angle = 0.3 + Math.random() * 0.3;    /* inclinaison, en radians sous l'horizontale */
+  const speed = 7 + Math.random() * 5;
+  _eeShooting.push({
+    x: dir === 1 ? -20 : canvas.width + 20,
+    y: Math.random() * canvas.height * 0.5,
+    vx: dir * speed * Math.cos(angle),
+    vy: speed * Math.sin(angle),
+    age: 0,
+    life: 45 + Math.random() * 25,
+    len: 55 + Math.random() * 35
+  });
+}
+function _eeDrawShootingStars(ctx, canvas) {
+  for (let i = _eeShooting.length - 1; i >= 0; i--) {
+    const sh = _eeShooting[i];
+    sh.age++;
+    sh.x += sh.vx;
+    sh.y += sh.vy;
+    if (sh.age > sh.life || sh.x < -60 || sh.x > canvas.width + 60 || sh.y > canvas.height + 60) {
+      _eeShooting.splice(i, 1);
+      continue;
+    }
+    const p     = sh.age / sh.life;
+    const alpha = Math.max(0, p < 0.15 ? p / 0.15 : 1 - (p - 0.15) / 0.85);
+    const norm  = Math.hypot(sh.vx, sh.vy) || 1;
+    const tailX = sh.x - (sh.vx / norm) * sh.len;
+    const tailY = sh.y - (sh.vy / norm) * sh.len;
+    const grad  = ctx.createLinearGradient(sh.x, sh.y, tailX, tailY);
+    grad.addColorStop(0, 'rgba(255,255,255,' + alpha.toFixed(2) + ')');
+    grad.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = grad;
+    ctx.lineWidth   = 1.6;
+    ctx.lineCap     = 'round';
+    ctx.beginPath();
+    ctx.moveTo(sh.x, sh.y);
+    ctx.lineTo(tailX, tailY);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(sh.x, sh.y, 1.3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
+    ctx.fill();
+  }
+  if (_eeShooting.length < 2 && Math.random() < _EE_SHOOTING_SPAWN_PROB) {
+    _eeSpawnShootingStar(canvas);
+  }
+}
+function _eeNewStar(canvas, randomAge) {
+  const life = 400 + Math.random() * 500; /* 6,7 à 15s à 60fps : cycle lent */
+  return {
+    x: Math.random() * canvas.width,
+    y: Math.random() * canvas.height,
+    r: Math.random() * 1.4 + 0.3,
+    base: Math.random() * .5 + .4,
+    phase: Math.random() * Math.PI * 2,
+    speed: .5 + Math.random() * 1.3,
+    age: randomAge ? Math.floor(Math.random() * life) : 0,
+    life: life
+  };
+}
+function _eeStartStars(canvas) {
+  const ctx = canvas.getContext('2d');
+  _eeStarList = [];
+  _eeShooting = [];
+  for (let i = 0; i < 200; i++) {
+    _eeStarList.push(_eeNewStar(canvas, true));
+  }
+  let t = 0;
+  function frame() {
+    t++;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let i = 0; i < _eeStarList.length; i++) {
+      let s = _eeStarList[i];
+      s.age++;
+      if (s.age >= s.life) {
+        /* Cette étoile s'est éteinte, une nouvelle apparaît ailleurs */
+        s = _eeStarList[i] = _eeNewStar(canvas, false);
+      }
+      /* Fondu d'apparition/disparition en douceur (≈15% du cycle de chaque côté) */
+      const fadeFrac = s.life * 0.15;
+      let envelope = 1;
+      if (s.age < fadeFrac) envelope = s.age / fadeFrac;
+      else if (s.age > s.life - fadeFrac) envelope = (s.life - s.age) / fadeFrac;
+      /* Scintillement (variation d'intensité) à l'intérieur de cette enveloppe */
+      const tw    = (Math.sin(t * 0.045 * s.speed + s.phase) + 1) / 2; /* 0..1 */
+      const alpha = Math.max(0, s.base * envelope * (0.3 + 0.7 * tw));
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,' + alpha.toFixed(2) + ')';
+      ctx.fill();
+    }
+    _eeDrawShootingStars(ctx, canvas);
+    _eeStarAnimId = requestAnimationFrame(frame);
+  }
+  if (_eeStarAnimId) cancelAnimationFrame(_eeStarAnimId);
+  _eeStarAnimId = requestAnimationFrame(frame);
+}
+function _eeStopStars() {
+  if (_eeStarAnimId) { cancelAnimationFrame(_eeStarAnimId); _eeStarAnimId = null; }
+  _eeShooting = [];
+}
+
+/* Admin — 4 clics sur le badge "En ligne" (discret, difficile à trouver par accident) */
+let _adminTaps = 0, _adminTimer = null;
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('.status-badge')) { return; }
+  _adminTaps++;
+  clearTimeout(_adminTimer);
+  _adminTimer = setTimeout(function(){ _adminTaps = 0; }, 2500);
+  if (_adminTaps >= 4) {
+    _adminTaps = 0;
+    var ee = document.getElementById('easter-egg');
+    var canvas = document.getElementById('ee-stars');
+    if (!ee) return;
+    ee.classList.add('show');
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    _eeStartStars(canvas);
+    var crawlEl = document.getElementById('ee-crawl');
+    if (crawlEl) {
+      crawlEl.style.animationPlayState = 'running';
+      crawlEl.style.animation = 'none';
+      crawlEl.offsetHeight;
+      crawlEl.style.animation = 'swCrawl 85s linear forwards';
+      /* Générique ralenti (60s → 85s) car le texte jaune défilait trop vite.
+         Déclencher les crédits 8,5s avant la fin (même ratio ~10% que
+         précédemment) : le texte jaune continue de défiler et de s'estomper
+         normalement, le fondu de 4s du fond noir (#ee-credits) le recouvre
+         progressivement au lieu de le remplacer d'un coup. À ajuster si
+         besoin une fois testé en conditions réelles. */
+      if (ee._freezeTimer) clearTimeout(ee._freezeTimer);
+      ee._freezeTimer = setTimeout(function() {
+        ee._freezeTimer = null;
+        var credits = document.getElementById('ee-credits');
+        var ci      = document.getElementById('ee-credits-inner');
+        if (!credits || !ci) return;
+        credits.classList.add('show');
+        ci.style.animation = 'none';
+        ci.offsetHeight;
+        ci.style.animation = 'creditsZoom 4s ease-out forwards';
+      }, 76500);
+    }
+  }
+});
+
+const PUSH_CATEGORIES = [
+  { id:'meteo',       icon:'🌪️', title:'Alerte météo',              msg:'Alerte météo sur la commune. Restez prudents.' },
+  { id:'eau',         icon:'💧', title:"Coupure d'eau",              msg:"Coupure d'eau en cours. Durée estimée : " },
+  { id:'inondation',  icon:'🌊', title:'Inondation',                 msg:"Risque ou situation d'inondation sur la commune." },
+  { id:'accident',    icon:'🚨', title:'Accident / Incident',        msg:'Accident ou incident signalé sur la commune.' },
+  { id:'route',       icon:'🚧', title:'Fermeture de route',         msg:'Fermeture de voirie. Déviation mise en place.' },
+  { id:'electricite', icon:'⚡', title:'Coupure électricité',        msg:'Coupure de courant sur la commune.' },
+  { id:'incendie',    icon:'🔥', title:'Incendie / Feu',             msg:'Incendie signalé sur la commune. Évitez la zone.' },
+  { id:'animal',      icon:'🐾', title:'Animal errant / blessé / mort', msg:'Animal signalé sur la commune.' },
+  { id:'evenement',   icon:'🎉', title:'Événement',                  msg:'Événement communal : ' },
+  { id:'ecole',       icon:'🏫', title:'École / Garderie fermée',     msg:"Fermeture exceptionnelle de l'école / garderie : " },
+  { id:'urgence',     icon:'🆘', title:'Urgence commune',            msg:'Message urgent de Libramont-Chevigny : ' },
+  { id:'info',        icon:'📢', title:'Information générale',       msg:'' },
+];
+
+function adminOpen() {
+  const splash = document.getElementById('admin-splash');
+  const bg     = document.getElementById('splash-bg');
+  if (!splash) { _adminOpenPanel(); return; }
+  var bgPhase = 0, bgRaf;
+  function animBg() {
+    bgPhase += 0.02;
+    var t = (Math.sin(bgPhase) + 1) / 2;
+    if (bg) bg.style.background = 'rgb('+Math.round(t*8)+','+Math.round(t*18)+','+Math.round(t*55)+')';
+    bgRaf = requestAnimationFrame(animBg);
+  }
+  bgRaf = requestAnimationFrame(animBg);
+  splash.classList.add('show'); splash.classList.remove('hide');
+  setTimeout(function() {
+    _adminOpenPanel();
+    splash.classList.add('hide');
+    setTimeout(function() {
+      cancelAnimationFrame(bgRaf);
+      splash.classList.remove('show','hide');
+    }, 500);
+  }, 2200);
+}
+
+function _adminOpenPanel() {
+  document.getElementById('admin-panel').classList.add('open');
+  const grid = document.getElementById('admin-push-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  PUSH_CATEGORIES.forEach(function(cat) {
+    const btn = document.createElement('button');
+    btn.style.cssText = 'display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:11px 14px;cursor:pointer;width:100%;text-align:left;margin-bottom:6px;-webkit-tap-highlight-color:transparent';
+    btn.innerHTML = '<span style="font-size:20px;flex-shrink:0">'+cat.icon+'</span>'
+      +'<span style="font-size:13px;color:rgba(255,255,255,.85);font-family:inherit">'+cat.title+'</span>';
+    btn.onclick = function() {
+      grid.querySelectorAll('button').forEach(function(b){
+        b.style.background='rgba(255,255,255,.05)';b.style.borderColor='rgba(255,255,255,.08)';
+      });
+      btn.style.background='rgba(26,87,20,.35)'; btn.style.borderColor='rgba(82,144,26,.5)';
+      document.getElementById('admin-notif-title').value = cat.title;
+      document.getElementById('admin-notif-body').value  = cat.msg;
+      var th = document.getElementById('admin-notif-theme');
+      if (th) th.value = cat.id;
+      document.getElementById('admin-compose').style.display = 'block';
+      document.getElementById('admin-notif-body').focus();
+    };
+    grid.appendChild(btn);
+  });
+  document.getElementById('admin-compose').style.display = 'none';
+  adminLoadStats();
+}
+
+async function adminLoadStats() {
+  try {
+    const r = await fetch(PUSH_WORKER_URL + '/stats', {
+      headers: { 'Authorization': 'Bearer ' + (_adminToken||'') }
+    });
+    const d = await r.json();
+    document.getElementById('admin-stats').textContent =
+      (d.subscribers || 0) + ' citoyen(s) abonné(s) aux alertes';
+  } catch(e) {}
+}
+
+/* ── Onglets admin ── */
+function adminSwitchTab(tab) {
+  document.querySelectorAll('.admin-tab').forEach(function(b,i){
+    b.classList.toggle('active', (i===0 && tab==='notif') || (i===1 && tab==='stats'));
+  });
+  document.getElementById('admin-pane-notif').classList.toggle('active', tab==='notif');
+  document.getElementById('admin-pane-stats').classList.toggle('active', tab==='stats');
+  if (tab === 'stats') adminLoadStatsPanel();
+}
+
+/* ── Clé de stockage stats locales ── */
+const _STATS_KEY = 'ode_stats_v1';
+function _statsLoad() {
+  try {
+    var d = JSON.parse(localStorage.getItem(_STATS_KEY) || '{}');
+    if (!d.since) { d.since = Date.now(); _statsSave(d); }
+    return d;
+  } catch(e) { return { since: Date.now() }; }
+}
+function _statsSave(d) {
+  try { localStorage.setItem(_STATS_KEY, JSON.stringify(d)); } catch(e) {}
+}
+
+/* ── Incrémenter un compteur stat ── */
+function _statInc(key, amount) {
+  var d = _statsLoad();
+  d[key] = (d[key] || 0) + (amount || 1);
+  _statsSave(d);
+}
+
+/* ── Incrémenter un sujet — envoi global au Worker ── */
+function _statTopic(svcId) {
+  fetch(PUSH_WORKER_URL + '/topic', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ svcId })
+  }).catch(function(){});
+}
+
+/* ── Envoyer langue + heure + jour + weekday au Worker à chaque question ── */
+function _statContext() {
+  var now     = new Date();
+  var hour    = now.getHours();
+  var date    = now.toISOString().slice(0,10);
+  var weekday = now.getDay();
+  fetch(PUSH_WORKER_URL + '/stat-context', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ lang: lang, hour: hour, date: date, weekday: weekday })
+  }).catch(function(){});
+}
+
+/* ── Charger le panneau stats ── */
+async function adminLoadStatsPanel() {
+  var d = _statsLoad();
+  var sinceEl = document.getElementById('stat-since');
+  if (sinceEl && d.since) {
+    sinceEl.textContent = new Date(d.since).toLocaleDateString('fr-BE',{day:'2-digit',month:'short',year:'numeric'});
+  }
+  var subEl    = document.getElementById('stat-subscribers');
+  var qGlobalEl = document.getElementById('stat-questions');
+  var nGlobalEl = document.getElementById('stat-notifs');
+  var sGlobalEl = document.getElementById('stat-signalements');
+  var naGlobalEl = document.getElementById('stat-noanswer');
+  var iEl       = document.getElementById('stat-installs');
+  if (subEl) subEl.textContent = '…';
+  try {
+    var r    = await fetch(PUSH_WORKER_URL + '/stats-full', {
+      headers: { 'Authorization': 'Bearer ' + (_adminToken||'') }
+    });
+    var data = await r.json();
+    if (subEl)     subEl.textContent     = (data.subscribers  || 0).toLocaleString('fr-BE');
+    if (qGlobalEl) qGlobalEl.textContent = (data.questions    || 0).toLocaleString('fr-BE');
+    if (nGlobalEl) nGlobalEl.textContent = (data.notifs_sent  || 0).toLocaleString('fr-BE');
+    if (sGlobalEl) sGlobalEl.textContent = (data.signalements || 0).toLocaleString('fr-BE');
+    if (naGlobalEl) naGlobalEl.textContent = (data.noAnswer   || 0).toLocaleString('fr-BE');
+    if (iEl)       iEl.textContent       = (data.installs     || 0).toLocaleString('fr-BE');
+    var statsEl = document.getElementById('admin-stats');
+    if (statsEl) statsEl.textContent = (data.subscribers || 0) + ' citoyen(s) abonné(s) aux alertes';
+
+    /* ── Sujets populaires ── */
+    var topics    = data.topics || {};
+    var topicList = Object.entries(topics).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+    var listEl    = document.getElementById('stat-topics-list');
+    if (listEl) {
+      if (!topicList.length) {
+        listEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:8px 0">Aucune donnée encore</div>';
+      } else {
+        var maxVal = topicList[0][1];
+        var svcLabels = {};
+        (SVCS.fr || []).forEach(function(s){ svcLabels[s.id] = s.icon + ' ' + s.label; });
+        listEl.innerHTML = topicList.map(function(entry) {
+          var pct = Math.round((entry[1] / maxVal) * 100);
+          var lbl = svcLabels[entry[0]] || entry[0];
+          return '<div class="stat-topic-row">'
+            + '<div class="stat-topic-label">'+lbl+'</div>'
+            + '<div class="stat-topic-bar-wrap"><div class="stat-topic-bar" style="width:'+pct+'%"></div></div>'
+            + '<div class="stat-topic-count">'+entry[1]+'</div>'
+            + '</div>';
+        }).join('');
+        listEl.innerHTML += '<div style="text-align:right;margin-top:10px">'
+          + '<button onclick="adminResetTopics()" style="font-size:11px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);color:rgba(255,255,255,.5);padding:4px 10px;border-radius:6px;cursor:pointer">🗑 Remettre à zéro</button>'
+          + '</div>';
+      }
+    }
+
+    /* ── Satisfaction (like/dislike) ──
+       Avec peu de votes, un pourcentage brut n'est pas fiable et peut donner
+       une mauvaise impression sans raison (ex: 1 like / 1 dislike = "50%").
+       On affiche donc toujours les chiffres bruts en premier, et on ne calcule
+       un pourcentage qu'à partir d'un minimum de 10 avis. */
+    var fbYes = data.feedbackYes || 0;
+    var fbNo  = data.feedbackNo  || 0;
+    var fbTot = fbYes + fbNo;
+    var satEl = document.getElementById('stat-satisfaction');
+    if (satEl) {
+      if (!fbTot) {
+        satEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div>';
+      } else if (fbTot < 10) {
+        satEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.4);text-align:center;padding:4px 0">'
+          + '👍 ' + fbYes + ' · 👎 ' + fbNo + '<br>'
+          + '<span style="color:rgba(255,255,255,.25)">Pas encore assez d\'avis (' + fbTot + ') pour un taux fiable</span>'
+          + '</div>';
+      } else {
+        var pctYes = Math.round((fbYes / fbTot) * 100);
+        satEl.innerHTML = '<div style="font-size:11px;color:rgba(255,255,255,.35);text-align:center;margin-bottom:6px">' + fbTot + ' avis au total</div>'
+          + '<div class="stat-topic-row">'
+          + '<div class="stat-topic-label">👍 Utile</div>'
+          + '<div class="stat-topic-bar-wrap"><div class="stat-topic-bar" style="width:'+pctYes+'%"></div></div>'
+          + '<div class="stat-topic-count">'+fbYes+' ('+pctYes+'%)</div>'
+          + '</div>'
+          + '<div class="stat-topic-row">'
+          + '<div class="stat-topic-label">👎 Pas utile</div>'
+          + '<div class="stat-topic-bar-wrap"><div class="stat-topic-bar" style="width:'+(100-pctYes)+'%"></div></div>'
+          + '<div class="stat-topic-count">'+fbNo+' ('+(100-pctYes)+'%)</div>'
+          + '</div>';
+      }
+    }
+
+    /* ── Questions avec avis négatif — pour comprendre CE QUI ne va pas,
+       pas juste combien (nécessite que le Worker agrège dislikedList) ── */
+    var dislikedList = data.dislikedList || [];
+    var dlEl = document.getElementById('stat-disliked-list');
+    if (dlEl) {
+      if (!dislikedList.length) {
+        dlEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div>';
+      } else {
+        dlEl.innerHTML = dislikedList.slice(0, 10).map(function(item) {
+          var q  = (item && item.question) ? item.question : String(item);
+          var ct = (item && item.count) ? ' ×' + item.count : '';
+          return '<div style="font-size:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
+            + q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + ct
+            + '</div>';
+        }).join('');
+      }
+    }
+
+    /* ── Questions sans réponse (trous du KV) ── */
+    var noAnsList = data.noAnswerList || [];
+    var naEl = document.getElementById('stat-noanswer-list');
+    if (naEl) {
+      if (!noAnsList.length) {
+        naEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div>';
+      } else {
+        naEl.innerHTML = noAnsList.slice(0, 10).map(function(item) {
+          var q  = (item && item.question) ? item.question : String(item);
+          var ct = (item && item.count) ? ' ×' + item.count : '';
+          return '<div style="font-size:12px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.06)">'
+            + q.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') + ct
+            + '</div>';
+        }).join('');
+      }
+    }
+
+    /* ── Évolution 30 jours ── */
+    var days30 = data.days || {};
+    var gridEl = document.getElementById('stat-days-grid');
+    var lblsEl = document.getElementById('stat-days-labels');
+    if (gridEl && lblsEl) {
+      var today = new Date();
+      var dates = [];
+      for (var i = 29; i >= 0; i--) {
+        var dd = new Date(today); dd.setDate(today.getDate() - i);
+        dates.push(dd.toISOString().slice(0,10));
+      }
+      var vals   = dates.map(function(dt){ return days30[dt] || 0; });
+      var maxDay = Math.max(1, Math.max.apply(null, vals));
+      gridEl.innerHTML = dates.map(function(dt, idx) {
+        var v = vals[idx];
+        var pct = Math.round((v / maxDay) * 100);
+        var isToday = idx === 29 ? ' today' : '';
+        return '<div class="stat-day-bar'+isToday+'" style="height:'+Math.max(2,pct)+'%" data-tip="'+dt.slice(5)+' : '+v+'"></div>';
+      }).join('');
+      lblsEl.innerHTML = dates.map(function(dt, idx) {
+        return '<div class="stat-day-lbl">'+(idx % 5 === 0 ? dt.slice(8) : '')+'</div>';
+      }).join('');
+    }
+
+    /* ── Jours de la semaine ── */
+    var weekdays = data.weekdays || {};
+    var wdNames  = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+    var wdEl     = document.getElementById('stat-weekdays-list');
+    if (wdEl) {
+      var wdVals = wdNames.map(function(_,i){ return weekdays[String(i)] || 0; });
+      var wdMax  = Math.max(1, Math.max.apply(null, wdVals));
+      wdEl.innerHTML = '<div class="stat-day-grid" style="height:56px">'
+        + wdVals.map(function(v,i){
+            var pct = Math.round((v/wdMax)*100);
+            var isToday = new Date().getDay()===i ? ' today' : '';
+            return '<div class="stat-day-bar'+isToday+'" style="height:'+Math.max(2,pct)+'%" data-tip="'+wdNames[i]+' : '+v+'"></div>';
+          }).join('')
+        + '</div><div class="stat-day-labels">'
+        + wdNames.map(function(n){ return '<div class="stat-day-lbl">'+n+'</div>'; }).join('')
+        + '</div>';
+    }
+
+    /* ── Heures de pointe ── */
+    var hours   = data.hours || {};
+    var hoursEl = document.getElementById('stat-hours-list');
+    if (hoursEl) {
+      var hourEntries = Object.entries(hours).sort(function(a,b){ return b[1]-a[1]; }).slice(0,5);
+      if (!hourEntries.length) {
+        hoursEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div>';
+      } else {
+        var maxH = hourEntries[0][1];
+        hoursEl.innerHTML = hourEntries.map(function(e) {
+          var pct = Math.round((e[1]/maxH)*100);
+          return '<div class="stat-bar-row">'
+            + '<div class="stat-bar-label">'+e[0]+'h</div>'
+            + '<div class="stat-bar-wrap"><div class="stat-bar-fill" style="width:'+pct+'%"></div></div>'
+            + '<div class="stat-bar-count">'+e[1]+'</div>'
+            + '</div>';
+        }).join('');
+      }
+    }
+
+    /* ── Langues ── */
+    var langs   = data.langs || {};
+    var langsEl = document.getElementById('stat-langs-list');
+    if (langsEl) {
+      var langNames    = {fr:'🇫🇷 Français',nl:'🇳🇱 Néerlandais',en:'🇬🇧 Anglais',de:'🇩🇪 Allemand',es:'🇪🇸 Espagnol',ar:'🇸🇦 Arabe'};
+      var langEntries  = Object.entries(langs).sort(function(a,b){ return b[1]-a[1]; });
+      if (!langEntries.length) {
+        langsEl.innerHTML = '<div style="font-size:12px;color:rgba(255,255,255,.3);text-align:center;padding:4px 0">Aucune donnée encore</div>';
+      } else {
+        var totalLang = langEntries.reduce(function(s,e){ return s+e[1]; },0);
+        langsEl.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:6px">'
+          + langEntries.map(function(e) {
+              var pct = Math.round((e[1]/totalLang)*100);
+              return '<span class="stat-lang-pill">'+(langNames[e[0]]||e[0])+' <strong>'+pct+'%</strong></span>';
+            }).join('')
+          + '</div>';
+      }
+    }
+
+  } catch(e) { if (subEl) subEl.textContent = '—'; }
+}
+
+async function adminRefresh(btn) {
+  btn.textContent = '⏳'; btn.disabled = true;
+  await adminLoadStatsPanel();
+  btn.textContent = '↻ Actualiser'; btn.disabled = false;
+  var upd = document.getElementById('stat-updated');
+  if (upd) upd.textContent = 'Mis à jour à ' + new Date().toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function adminResetTopics() {
+  if (!confirm('Remettre les sujets à zéro ?')) return;
+  try {
+    await fetch(PUSH_WORKER_URL + '/stats-reset-topics', {
+      method: 'POST',
+      headers: { 'Authorization': 'Bearer ' + (_adminToken||'') }
+    });
+    adminLoadStatsPanel();
+  } catch(e) { alert('Erreur : ' + e.message); }
+}
+
+
+async function adminSendNotif() {
+  const title = document.getElementById('admin-notif-title').value.trim();
+  const body  = document.getElementById('admin-notif-body').value.trim();
+  const theme = (document.getElementById('admin-notif-theme') || {}).value || 'info';
+  if (!body) { alert('Écrivez un message.'); return; }
+  const btn = document.getElementById('admin-send-btn') || document.querySelector('.admin-send');
+  btn.disabled = true; btn.textContent = 'Envoi…';
+  try {
+    const r = await fetch(PUSH_WORKER_URL + '/notify', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+(_adminToken||'')},
+      body: JSON.stringify({ title, body, theme })
+    });
+    const d = await r.json();
+    alert('✅ ' + (d.sent||0) + ' notification(s) envoyée(s).');
+    _statInc('notifs_sent', d.sent || 0);
+    _pushStore(title, body);
+    _pushRender();
+    document.getElementById('admin-notif-body').value = '';
+    document.getElementById('admin-panel').classList.remove('open');
+    adminLoadStats();
+  } catch(e) { alert('❌ ' + e.message); }
+  finally { btn.disabled = false; btn.textContent = '📡 Diffuser'; }
+}
+/* ═══ BANDEAU PUSH — localStorage 48h ═══ */
+const _PUSH_KEY = 'ode_pushes';
+const _PUSH_TTL = 48 * 60 * 60 * 1000;
+
+function _pushLoad() {
+  try {
+    var raw = localStorage.getItem(_PUSH_KEY);
+    if (!raw) return [];
+    var list = JSON.parse(raw);
+    var now = Date.now();
+    list = list.filter(function(p){ return now - p.ts < _PUSH_TTL; });
+    return list;
+  } catch(e) { return []; }
+}
+function _pushSave(list) {
+  try { localStorage.setItem(_PUSH_KEY, JSON.stringify(list.slice(0,30))); } catch(e) {}
+}
+function _pushStore(title, body) {
+  var list = _pushLoad();
+  list.unshift({ title: title||'Ville de Libramont-Chevigny', body: body||'', ts: Date.now() });
+  _pushSave(list);
+}
+function _pushFmtTime(ts) {
+  var diff = Math.floor((Date.now()-ts)/60000);
+  if (diff < 1)   return "À l'instant";
+  if (diff < 60)  return 'Il y a '+diff+' min';
+  if (diff < 120) return 'Il y a 1h';
+  if (diff < 1440)return 'Il y a '+Math.floor(diff/60)+'h';
+  var d = new Date(ts);
+  return d.toLocaleDateString('fr-BE',{day:'2-digit',month:'short'})
+    +' '+d.toLocaleTimeString('fr-BE',{hour:'2-digit',minute:'2-digit'});
+}
+function _esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function _pushRender() {
+  var list = _pushLoad();
+  var strip = document.getElementById('push-strip');
+  if (!strip) return;
+  if (!list.length) { strip.classList.remove('show'); return; }
+  strip.classList.add('show');
+  var latest = document.getElementById('push-strip-latest');
+  var badge  = document.getElementById('push-strip-badge');
+  if (latest) latest.textContent = list[0].title + (list[0].body ? ' — '+list[0].body.slice(0,45)+(list[0].body.length>45?'…':'') : '');
+  if (badge)  badge.textContent  = list.length === 1 ? '1 alerte' : list.length+' alertes';
+  var listEl = document.getElementById('push-strip-list');
+  if (!listEl) return;
+  listEl.innerHTML = list.map(function(p,i){
+    return '<div class="push-strip-item">'
+      +'<div class="push-item-txt">'
+      +'<div class="push-item-title">'+_esc(p.title)+'</div>'
+      +(p.body?'<div class="push-item-body">'+_esc(p.body)+'</div>':'')
+      +'<div class="push-item-time">'+_pushFmtTime(p.ts)+'</div>'
+      +'</div>'
+      +'<button class="push-item-del" onclick="_pushDelete('+i+')" title="Supprimer">✕</button>'
+      +'</div>';
+  }).join('');
+}
+function _pushToggle() {
+  var body   = document.getElementById('push-strip-body');
+  var arrow  = document.getElementById('push-strip-arrow');
+  var isOpen = body.classList.toggle('open');
+  if (arrow) arrow.classList.toggle('open', isOpen);
+}
+function _pushDelete(idx) {
+  var list = _pushLoad(); list.splice(idx,1); _pushSave(list); _pushRender();
+}
+function _pushClearAll() { _pushSave([]); _pushRender(); }
+
+function _showPushToast(title, body) {
+  var old = document.getElementById('push-toast');
+  if (old) old.remove();
+  var t = document.createElement('div');
+  t.id = 'push-toast';
+  t.onclick = function(){ t.remove(); };
+  t.innerHTML = '<span style="font-size:20px;flex-shrink:0">📡</span>'
+    +'<div style="flex:1;min-width:0">'
+    +'<div style="font-family:Sora,sans-serif;font-size:13px;font-weight:600;margin-bottom:2px">'+_esc(title)+'</div>'
+    +'<div style="font-size:12px;opacity:.85;line-height:1.4">'+_esc(body)+'</div>'
+    +'</div>'
+    +'<button onclick="event.stopPropagation();document.getElementById(\'push-toast\').remove()" '
+    +'style="background:rgba(255,255,255,.15);border:none;color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;flex-shrink:0">✕</button>';
+  document.body.appendChild(t);
+  setTimeout(function(){ var el=document.getElementById('push-toast'); if(el) el.remove(); }, 8000);
+}
+
+/* Écouter le SW quand l'app est ouverte */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.addEventListener('message', function(e) {
+    if (e.data && e.data.type === 'PUSH_RECEIVED') {
+      _pushStore(e.data.title, e.data.body);
+      _pushRender();
+      _showPushToast(e.data.title, e.data.body);
+    }
+  });
+}
+
+/* Charger au démarrage */
+window.addEventListener('load', function(){ setTimeout(_pushRender, 600); });
+
+</script>
+
+<div id="admin-splash">
+  <div id="splash-bg"></div>
+  <div class="splash-center">
+    <img src="libramont-logo.png" style="width:64px;display:block;margin:0 auto 16px;border-radius:12px;filter:drop-shadow(0 0 16px rgba(0,120,132,.7));animation:splashFloat 2s ease-in-out infinite alternate">
+    <div class="splash-access">Accès accordé</div>
+  </div>
+</div>
+
+<!-- Easter Egg — Générique étoile Libramont-Chevigny -->
+<div id="admin-splash">
+  <div id="splash-bg"></div>
+  <div class="splash-center">
+    <div class="splash-access">Accès accordé</div>
+  </div>
+</div>
+
+<div id="easter-egg">
+  <canvas id="ee-stars"></canvas>
+  <div id="ee-perspective">
+    <div id="ee-fade-top"></div>
+    <div id="ee-crawl">
+      <h1>★ LibramontBot</h1>
+      <h2>L'histoire d'un projet né dans l'ombre</h2>
+      <p>Tout commence en mai 2024, quand Nicolas rejoint la commune de Sainte-Ode comme employé communal. Il observe. Il écoute. Et il voit une collègue débordée de travail, enchaîner les heures supplémentaires au détriment de sa santé et de sa vie privée.</p>
+      <p>Nicolas se pose une question simple :<br><strong style="color:#f0c040">Est-ce qu'il peut faire quelque chose ?</strong></p>
+      <p>Pas grand-chose au départ. Juste une idée. Une idée qui germe en silence depuis 2025, sans trop y croire — parce qu'avec ses connaissances de l'époque, le projet semblait hors de portée.</p>
+      <p>Mais Nicolas est du genre à ne pas lâcher.<br>Il se forme. Il apprend. Il teste.<br>Et début 2026, il se lance vraiment.</p>
+      <p style="text-align:center;font-style:italic;font-size:24px;margin:40px 0;color:#f0c040">L'idée n'était pas de remplacer l'humain.<br>L'idée était de lui rendre un peu de temps.</p>
+      <p>Sainte-Ode a été le premier essai. Puis Bastogne a suivi.<br>Aujourd'hui, c'est au tour de Libramont-Chevigny d'accueillir le projet.</p>
+      <div class="ee-section">Et maintenant, l'histoire continue</div>
+      <p>Si tu lis ces lignes, c'est que tu as découvert ce que peu de personnes connaissaient.<br>LibramontBot n'est plus un projet caché.<br>Il est désormais entre les mains de celles et ceux pour qui il a été imaginé.</p>
+      <p style="text-align:center;font-size:34px;font-weight:bold;color:#f0c040;margin:30px 0">Toi.</p>
+      <p style="text-align:center">Merci de l'utiliser.<br>Merci de le faire vivre.<br>Et surtout, merci de faire partie de cette aventure.</p>
+      <div style="text-align:center;margin:30px 0">
+      <div style="height:80px"></div>
+      </div>
+      <div style="height:200px"></div>
+    </div>
+  </div>
+  <div id="ee-credits">
+    <div id="ee-credits-inner">
+      <img src="nd-logo-dark.jpg" style="width:200px;margin-bottom:20px;border-radius:12px;">
+      <h2 style="color:#4a90d9">NDdigitalconnect</h2>
+      <p style="color:rgba(74,144,217,.8)">Idée, développement &amp; entêtement</p>
+      <p style="margin-top:6px;font-size:16px;color:rgba(74,144,217,.6)">nddigitalconnect@gmail.com</p>
+      <p style="margin-top:4px;font-size:16px;color:rgba(74,144,217,.6)">0471/61.50.12</p>
+      <p style="margin-top:20px;color:rgba(74,144,217,.8)">La Ville de Libramont-Chevigny fait confiance au projet</p>
+      <p style="font-weight:bold;color:#4a90d9;white-space:nowrap;font-size:clamp(13px,4.3vw,18px)">Merci à la Ville de Libramont-Chevigny&nbsp;★</p>
+      <div class="ee-copy" style="color:rgba(74,144,217,.55)">LibramontBot © 2026 — Tous droits réservés<br>Ville de Libramont-Chevigny · Province de Luxembourg · Ardenne belge</div>
+    </div>
+  </div>
+  <button id="ee-close" onclick="
+    var ee=document.getElementById('easter-egg');
+    if(ee._freezeTimer){clearTimeout(ee._freezeTimer);ee._freezeTimer=null;}
+    var crawlEl=document.getElementById('ee-crawl');
+    if(crawlEl){crawlEl.style.animation='none';}
+    document.getElementById('ee-credits').classList.remove('show');
+    var ci=document.getElementById('ee-credits-inner');
+    if(ci)ci.style.animation='none';
+    if (typeof _eeStopStars === 'function') _eeStopStars();
+    ee.classList.remove('show');
+  ">✕ Fermer</button>
+</div>
+
+</body>
+</html>

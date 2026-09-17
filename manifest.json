@@ -1,0 +1,31 @@
+{
+  "name": "LibramontBot — Ville de Libramont-Chevigny",
+  "short_name": "LibramontBot",
+  "description": "Assistante IA officielle de la Ville de Libramont-Chevigny",
+  "start_url": "/LibramontBot/",
+  "scope": "/LibramontBot/",
+  "display": "standalone",
+  "background_color": "#04363D",
+  "theme_color": "#00606C",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "icons": [
+    {
+      "src": "/LibramontBot/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/LibramontBot/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "government",
+    "utilities"
+  ],
+  "screenshots": []
+}
