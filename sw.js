@@ -3,7 +3,7 @@
    Gestion des notifications push + cache PWA
    ═══════════════════════════════════════════════════════════ */
  
-const CACHE_NAME = 'libramontbot-v1';  /* ← à incrémenter pour forcer le rechargement sur tous les appareils */
+const CACHE_NAME = 'libramontbot-v2';  /* ← à incrémenter pour forcer le rechargement sur tous les appareils */
 const ASSETS = [
   '/LibramontBot/',
   '/LibramontBot/index.html',
