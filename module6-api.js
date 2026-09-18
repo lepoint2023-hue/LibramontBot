@@ -2,15 +2,13 @@
    MODULE 6 — APPEL VIA PROXY CLOUDFLARE
    Ville de Libramont-Chevigny · v7.0
    ═══════════════════════════════════════════════════════════ */
-
+ 
 const PROXY_URL = "https://libramontbot.lepoint2023.workers.dev/llm";
-
+ 
 const HISTORY_MAX   = 20;
 const FETCH_TIMEOUT = 20000;
 const MAX_TOKENS    = 1500;
-
-let activeProvider = "groq";
-
+ 
 /* ── Messages multilingues ── */
 const MSG_ERREUR = {
   fr: "Désolé, je n'ai pas pu traiter votre demande. Contactez-nous au **+32 61 22 21 18**.",
@@ -20,7 +18,7 @@ const MSG_ERREUR = {
   es: "Lo sentimos, no pudimos procesar su solicitud. Contáctenos en **+32 61 22 21 18**.",
   ar: "عذراً، لم نتمكن من معالجة طلبك. اتصل بنا على **+32 61 22 21 18**."
 };
-
+ 
 const MSG_CONNEXION = {
   fr: "⚠️ Connexion indisponible. Contactez-nous au **+32 61 22 21 18** ou via [le guichet citoyen](https://www.libramontchevigny.be).",
   nl: "⚠️ Verbinding niet beschikbaar. Bel **+32 61 22 21 18** of via [het burgerloket](https://www.libramontchevigny.be).",
@@ -29,7 +27,7 @@ const MSG_CONNEXION = {
   es: "⚠️ Conexión no disponible. Contáctenos en **+32 61 22 21 18** o via [portal ciudadano](https://www.libramontchevigny.be).",
   ar: "⚠️ الاتصال غير متاح. اتصل بنا على **+32 61 22 21 18** أو عبر [بوابة المواطن](https://www.libramontchevigny.be)."
 };
-
+ 
 const MSG_QUOTA = {
   fr: "⚠️ Le service est temporairement saturé. Réessayez dans quelques instants ou appelez-nous au **+32 61 22 21 18**.",
   nl: "⚠️ De service is tijdelijk overbelast. Probeer het later opnieuw of bel **+32 61 22 21 18**.",
@@ -38,7 +36,7 @@ const MSG_QUOTA = {
   es: "⚠️ El servicio está temporalmente saturado. Inténtelo de nuevo o llame al **+32 61 22 21 18**.",
   ar: "⚠️ الخدمة مثقلة مؤقتاً. يرجى المحاولة مرة أخرى أو الاتصال على **+32 61 22 21 18**."
 };
-
+ 
 const MSG_TIMEOUT = {
   fr: "⚠️ La réponse prend trop de temps. Vérifiez votre connexion ou contactez-nous au **+32 61 22 21 18**.",
   nl: "⚠️ Het antwoord duurt te lang. Controleer uw verbinding of bel **+32 61 22 21 18**.",
@@ -47,24 +45,24 @@ const MSG_TIMEOUT = {
   es: "⚠️ La respuesta tarda demasiado. Verifique su conexión o contáctenos en **+32 61 22 21 18**.",
   ar: "⚠️ الاستجابة تستغرق وقتاً طويلاً. تحقق من اتصالك أو اتصل على **+32 61 22 21 18**."
 };
-
+ 
 /* ── Historique ── */
 let history = [];
 let loading  = false;
 let svcSelectorTimer = null; /* id du setTimeout qui affiche la grille de services après le message d'accueil */
-
+ 
 function loadHistory() {
   try {
     const stored = sessionStorage.getItem("chatHistory");
     if (stored) history = JSON.parse(stored);
   } catch (e) { history = []; }
 }
-
+ 
 function saveHistory() {
   try { sessionStorage.setItem("chatHistory", JSON.stringify(history)); }
   catch (e) {}
 }
-
+ 
 /* ── Helpers ── */
 function getLang() {
   return (typeof window.lang === "string" && window.lang) ? window.lang : "fr";
@@ -78,7 +76,7 @@ function safeGetQR() {
   }
   return undefined;
 }
-
+ 
 /* ── Extraction réponse selon provider ── */
 function _extractReply(data, provider, lang) {
   if (provider === "groq") {
@@ -86,7 +84,7 @@ function _extractReply(data, provider, lang) {
   }
   return data?.candidates?.[0]?.content?.parts?.[0]?.text || MSG_ERREUR[lang];
 }
-
+ 
 /* ══════════════════════════════════════════════════════
    APPEL AU PROXY — format unifié
    ══════════════════════════════════════════════════════ */
@@ -103,48 +101,36 @@ async function _callProxy(provider, systemPrompt, msgs, signal) {
     })
   });
 }
-
+ 
 /* ══════════════════════════════════════════════════════
    APPEL PRINCIPAL
    ══════════════════════════════════════════════════════ */
 async function callGemini(userMessage) {
   loading = true;
   document.getElementById("send-btn").disabled = true;
-
+ 
   const lang         = getLang();
   const systemPrompt = buildPrompt(getSelectedSvc(), lang);
-
+ 
   history.push({ role: "user", content: userMessage });
   if (history.length > HISTORY_MAX) history = history.slice(-HISTORY_MAX);
   saveHistory();
-
+ 
   showTyping();
-
+ 
   const controller = new AbortController();
   const timeoutId  = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
-
+ 
   try {
+    /* Un seul provider actif pour le moment : Gemini est désactivé côté Worker
+       (stub permanent qui renvoie toujours une erreur). Inutile donc de tenter
+       une bascule dessus en cas de 429 — ça bloquait définitivement le chat. */
     let response;
-    let provider  = activeProvider;
-    let attempted = new Set();
-
-    /* Cycle : max 2 providers différents */
-    while (attempted.size < 2) {
-      attempted.add(provider);
-
-      response = await _callProxy(provider, systemPrompt, history, controller.signal);
-
-      if (response.status === 429) {
-        const next = (provider === "groq") ? "gemini" : "groq";
-        console.info("[LibramontBot] " + provider + " saturé → bascule sur " + next);
-        activeProvider = next;
-        provider       = next;
-        continue;
-      }
-      break;
-    }
-
-    /* Les deux saturés : afficher le message sans bloquer les prochaines requêtes */
+    const provider = "groq";
+ 
+    response = await _callProxy(provider, systemPrompt, history, controller.signal);
+ 
+    /* Saturé : afficher le message sans bloquer les prochaines requêtes */
     if (response.status === 429) {
       hideTyping();
       if (typeof setStatus === "function") setStatus("quota");
@@ -153,17 +139,17 @@ async function callGemini(userMessage) {
       clearTimeout(timeoutId);
       return;
     }
-
+ 
     if (!response.ok) throw new Error("HTTP " + response.status);
-
+ 
     clearTimeout(timeoutId);
-
+ 
     const data  = await response.json();
     const reply = _extractReply(data, provider, lang);
-
+ 
     history.push({ role: "assistant", content: reply });
     saveHistory();
-
+ 
     /* Suivi des questions sans réponse — remonte au Command Center pour
        repérer automatiquement les trous du KV (ex : tarif manquant). */
     if (/je n'ai pas cette information/i.test(reply)) {
@@ -173,11 +159,11 @@ async function callGemini(userMessage) {
         body: JSON.stringify({ question: userMessage, lang })
       }).catch(function () {});
     }
-
+ 
     hideTyping();
     if (typeof setStatus === "function") setStatus("online");
     _callAddMsg("bot", reply, safeGetQR());
-
+ 
   } catch (error) {
     clearTimeout(timeoutId);
     hideTyping();
@@ -185,10 +171,10 @@ async function callGemini(userMessage) {
     if (typeof setStatus === "function") setStatus("offline");
     _callAddMsg("bot", isTimeout ? MSG_TIMEOUT[lang] : MSG_CONNEXION[lang]);
   }
-
+ 
   _finaliseCall();
 }
-
+ 
 /* ── Finalisation ── */
 function _finaliseCall() {
   loading = false;
@@ -197,7 +183,7 @@ function _finaliseCall() {
   if (btn)   btn.disabled   = false;
   if (input) input.blur();
 }
-
+ 
 /* ── Résolution tardive de addMsg (défini dans index.html après module6) ── */
 function _callAddMsg(role, text, qrs) {
   if (typeof window.addMsg === "function") {
@@ -207,7 +193,7 @@ function _callAddMsg(role, text, qrs) {
     setTimeout(function() { _callAddMsg(role, text, qrs); }, 100);
   }
 }
-
+ 
 /* ── Envoi d'un message ── */
 async function sendMsg(text) {
   const input   = document.getElementById("chat-input");
@@ -227,31 +213,31 @@ async function sendMsg(text) {
   _callAddMsg("user", message);
   await callGemini(message);
 }
-
+ 
 function sendMessage() { sendMsg(); }
-
+ 
 /* ── Réinitialisation ── */
 function resetChat() {
   history = [];
   sessionStorage.removeItem("chatHistory");
   window.selectedSvc = null;
   if (window._usedQR) window._usedQR.clear();
-
+ 
   /* Annule un éventuel timer d'un précédent reset encore en attente,
      pour éviter que deux grilles de services ne s'affichent en cascade. */
   clearTimeout(svcSelectorTimer);
-
+ 
   const area = document.getElementById("messages");
   const s    = S[getLang()] || S.fr;
-
+ 
   area.innerHTML = '<div class="ts" id="ts-label">' + s.ts + "</div>";
   document.getElementById("svc-pill").classList.remove("on");
   document.getElementById("chat-input").placeholder = s.ph;
-
+ 
   setTimeout(function () {
     _callAddMsg("bot", s.welcome);
     svcSelectorTimer = setTimeout(showSvcSelector, 1000);
   }, 300);
 }
-
+ 
 loadHistory();
